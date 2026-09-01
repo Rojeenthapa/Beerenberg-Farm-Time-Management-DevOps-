@@ -1,0 +1,611 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+
+  color: #142c22;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+
+/* =========================
+APP
+========================= */
+
+.app {
+  width: 100%;
+  height: 100vh;
+
+  display: flex;
+
+  overflow: hidden;
+}
+
+
+/* =========================
+SIDEBAR
+========================= */
+
+.sidebar {
+  width: 191px;
+  height: 100vh;
+
+  background: #123d2e;
+
+  display: flex;
+  flex-direction: column;
+
+  color: white;
+
+  position: relative;
+  z-index: 10;
+}
+
+
+/* =========================
+BRAND
+========================= */
+
+.brand {
+  height: 112px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 10px;
+
+  gap: 9px;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+
+  border: 2px solid #18d894;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #18d894;
+
+  font-size: 24px;
+}
+
+.brand-text h1 {
+  font-size: 14px;
+  font-weight: 700;
+
+  color: white;
+}
+
+.brand-text p {
+  font-size: 11px;
+
+  color: #18d894;
+}
+
+
+/* =========================
+NAVIGATION
+========================= */
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 10px;
+
+  gap: 12px;
+
+  color: #a6eacb;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition: 0.2s;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.nav-item.active {
+  background: rgba(255, 255, 255, 0.19);
+
+  color: white;
+
+  border-radius: 4px;
+
+  margin: 0 8px;
+
+  padding-left: 2px;
+}
+
+.nav-icon {
+  width: 18px;
+
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 18px;
+}
+
+.logout-container {
+  margin-top: auto;
+
+  padding-bottom: 8px;
+}
+
+
+/* =========================
+MAIN
+========================= */
+
+.main-content {
+  flex: 1;
+
+  height: 100vh;
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background-image: url("/barn.jpg");
+
+  background-size: cover;
+
+  background-position: center;
+
+  background-repeat: no-repeat;
+}
+
+
+/* Background overlay */
+
+.background-overlay {
+  position: absolute;
+
+  inset: 0;
+
+  background: rgba(255, 255, 255, 0.24);
+
+  z-index: 1;
+}
+
+
+/* =========================
+LOGIN CARD
+========================= */
+
+.login-card {
+  width: 385px;
+
+  min-height: 520px;
+
+  background: white;
+
+  border-radius: 17px;
+
+  position: relative;
+
+  z-index: 2;
+
+  padding: 40px 32px 38px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.12);
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+}
+
+
+/* =========================
+LOGIN LOGO
+========================= */
+
+.login-logo {
+  width: 64px;
+  height: 64px;
+
+  border: 2px solid #2d744d;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 12px;
+
+  color: #2d744d;
+
+  font-size: 39px;
+}
+
+
+/* =========================
+TITLE
+========================= */
+
+.login-card h2 {
+  font-size: 25px;
+
+  font-weight: 700;
+
+  color: #101e35;
+}
+
+.system-title {
+  color: #66748a;
+
+  font-size: 14px;
+}
+
+
+/* =========================
+WELCOME
+========================= */
+
+.welcome {
+  text-align: center;
+
+  margin-top: 27px;
+
+  margin-bottom: 21px;
+}
+
+.welcome h3 {
+  font-size: 16px;
+
+  color: #111827;
+
+  margin-bottom: 5px;
+}
+
+.welcome p {
+  font-size: 14px;
+
+  color: #8190a5;
+}
+
+
+/* =========================
+FORM
+========================= */
+
+.login-card form {
+  width: 100%;
+}
+
+
+/* =========================
+INPUT
+========================= */
+
+.input-wrapper {
+  width: 100%;
+
+  height: 43px;
+
+  border: 1px solid #cbd3df;
+
+  border-radius: 8px;
+
+  display: flex;
+
+  align-items: center;
+
+  margin-bottom: 14px;
+
+  background: white;
+}
+
+.input-wrapper:focus-within {
+  border-color: #2d744d;
+
+  box-shadow:
+    0 0 0 3px rgba(45, 116, 77, 0.08);
+}
+
+.input-icon {
+  width: 35px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  color: #9aa6b8;
+
+  font-size: 17px;
+}
+
+.input-wrapper input {
+  flex: 1;
+
+  height: 100%;
+
+  border: none;
+
+  outline: none;
+
+  font-size: 14px;
+
+  color: #263548;
+
+  background: transparent;
+}
+
+.input-wrapper input::placeholder {
+  color: #7f8da0;
+}
+
+
+/* =========================
+PASSWORD BUTTON
+========================= */
+
+.password-toggle {
+  width: 38px;
+  height: 100%;
+
+  border: none;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  color: #8c9aad;
+
+  font-size: 17px;
+}
+
+
+/* =========================
+OPTIONS
+========================= */
+
+.form-options {
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  margin-top: 3px;
+
+  margin-bottom: 16px;
+}
+
+.remember {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #304154;
+
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.remember input {
+  width: 16px;
+  height: 16px;
+
+  cursor: pointer;
+}
+
+.forgot-link {
+  color: #006d51;
+
+  font-size: 14px;
+
+  font-weight: 500;
+}
+
+
+/* =========================
+LOGIN BUTTON
+========================= */
+
+.login-button {
+  width: 100%;
+
+  height: 40px;
+
+  border: none;
+
+  border-radius: 7px;
+
+  background: #2d744d;
+
+  color: white;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.login-button:hover {
+  background: #25633f;
+}
+
+
+/* =========================
+SIGN UP
+========================= */
+
+.signup-text {
+  margin-top: 17px;
+
+  font-size: 14px;
+
+  color: #6f7e91;
+
+  text-align: center;
+}
+
+.signup-text a {
+  color: #006d51;
+
+  font-weight: 600;
+}
+
+
+/* =========================
+HELP BUTTON
+========================= */
+
+.help-button {
+  position: absolute;
+
+  z-index: 5;
+
+  right: 12px;
+  bottom: 11px;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  border: 1px solid #222;
+
+  background: #252525;
+
+  color: white;
+
+  font-size: 19px;
+
+  cursor: pointer;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+
+  .sidebar {
+    width: 70px;
+  }
+
+  .brand {
+    justify-content: center;
+
+    padding: 0;
+  }
+
+  .brand-text {
+    display: none;
+  }
+
+  .nav-item {
+    justify-content: center;
+
+    padding: 0;
+  }
+
+  .nav-item span:last-child {
+    display: none;
+  }
+
+  .nav-icon {
+    font-size: 20px;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .sidebar {
+    width: 58px;
+  }
+
+  .login-card {
+    width: calc(100% - 32px);
+
+    max-width: 385px;
+
+    min-height: auto;
+
+    padding: 32px 25px;
+  }
+}
+
+
+@media (max-width: 400px) {
+
+  .sidebar {
+    display: none;
+  }
+
+  .login-card {
+    width: calc(100% - 24px);
+
+    padding: 30px 20px;
+  }
+}
