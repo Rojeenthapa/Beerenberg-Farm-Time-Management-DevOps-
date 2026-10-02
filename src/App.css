@@ -1035,3 +1035,32 @@ a {
   }
 
 }
+
+.login-error,
+.error-message {
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #f2b8b5;
+  border-radius: 6px;
+  background: #fff0ef;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.success-message {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid #a7dfbd;
+  border-radius: 6px;
+  background: #edfff3;
+  color: #16733d;
+  font-size: 13px;
+}
+
+.login-button:disabled,
+.employee-save-btn:disabled,
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

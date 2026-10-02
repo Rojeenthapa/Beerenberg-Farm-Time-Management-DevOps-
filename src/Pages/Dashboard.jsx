@@ -12,12 +12,8 @@ import {
   UserRound,
   Sprout,
   CircleCheck,
-  Tractor,
+  Tractor
 } from "lucide-react";
-
-// ==========================================
-// PAGE IMPORTS
-// ==========================================
 
 import Employees from "./Employees";
 import ClockInOut from "./ClockInOut";
@@ -26,78 +22,74 @@ import Roster from "./Roster";
 import Payroll from "./Payroll";
 import Settings from "./Settings";
 
-// CSS
 import "../styles/Dashboard.css";
 
-function Dashboard() {
-  // Controls which page is displayed
-  const [activePage, setActivePage] = useState("Dashboard");
 
-  // ==========================================
-  // RECENT CLOCK EVENTS
-  // ==========================================
+function Dashboard({ admin, onLogout }) {
+  const [activePage, setActivePage] =
+    useState("Dashboard");
+
 
   const clockEvents = [
     {
       employee: "John Doe",
       type: "Clock In",
       station: "Main Gate",
-      time: "07:02 AM",
+      time: "07:02 AM"
     },
     {
       employee: "Mary Smith",
       type: "Clock In",
       station: "Packing Shed",
-      time: "07:15 AM",
+      time: "07:15 AM"
     },
     {
       employee: "Robert Brown",
       type: "Clock In",
       station: "Orchard — Block A",
-      time: "07:30 AM",
+      time: "07:30 AM"
     },
     {
       employee: "John Doe",
       type: "Clock Out",
       station: "Packing Shed",
-      time: "11:15 AM",
+      time: "11:15 AM"
     },
     {
       employee: "Linda White",
       type: "Clock Out",
       station: "Administration",
-      time: "12:01 PM",
-    },
+      time: "12:01 PM"
+    }
   ];
 
-  // ==========================================
-  // DASHBOARD HOME
-  // ==========================================
 
-  const DashboardHome = () => {
+  function DashboardHome() {
     return (
       <div className="dashboard-home">
-        {/* HEADER */}
-
         <header className="dashboard-top-header">
           <h1>Dashboard</h1>
 
           <div className="dashboard-admin">
-            <span>Welcome, Admin</span>
+            <span>
+              Welcome, {admin?.full_name || "Admin"}
+            </span>
 
             <div className="admin-circle">
               <UserRound size={18} />
             </div>
+
+            <button
+              type="button"
+              className="dashboard-logout-button"
+              onClick={onLogout}
+            >
+              Logout
+            </button>
           </div>
         </header>
 
-        {/* ======================================
-            TOP CARDS
-        ====================================== */}
-
         <section className="dashboard-top-cards">
-          {/* EMPLOYEES */}
-
           <div className="dashboard-summary-card">
             <div className="summary-circle">
               <Users size={21} />
@@ -105,19 +97,18 @@ function Dashboard() {
 
             <div className="summary-info">
               <p>Employees</p>
-
               <h2>12</h2>
 
               <button
                 type="button"
-                onClick={() => setActivePage("Employees")}
+                onClick={() =>
+                  setActivePage("Employees")
+                }
               >
                 View employees
               </button>
             </div>
           </div>
-
-          {/* ROSTER */}
 
           <div className="dashboard-summary-card">
             <div className="summary-circle">
@@ -126,12 +117,13 @@ function Dashboard() {
 
             <div className="summary-info">
               <p>Upcoming Roster</p>
-
               <h2>5</h2>
 
               <button
                 type="button"
-                onClick={() => setActivePage("Roster")}
+                onClick={() =>
+                  setActivePage("Roster")
+                }
               >
                 View roster
               </button>
@@ -139,20 +131,16 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* ======================================
-            MIDDLE SECTION
-        ====================================== */}
-
         <section className="dashboard-middle">
-          {/* CLOCKED IN NOW */}
-
           <div className="dashboard-panel clocked-panel">
             <div className="dashboard-panel-heading">
               <h3>Clocked In Now</h3>
 
               <button
                 type="button"
-                onClick={() => setActivePage("ClockInOut")}
+                onClick={() =>
+                  setActivePage("ClockInOut")
+                }
               >
                 Clock In/Out
               </button>
@@ -165,15 +153,11 @@ function Dashboard() {
 
               <div>
                 <h2>8</h2>
-
                 <p>of 12 staff clocked in</p>
-
                 <span>4 yet to start shift</span>
               </div>
             </div>
           </div>
-
-          {/* UPCOMING SCHEDULES */}
 
           <div className="dashboard-panel schedules-panel">
             <div className="dashboard-panel-heading schedules-heading">
@@ -181,13 +165,13 @@ function Dashboard() {
 
               <button
                 type="button"
-                onClick={() => setActivePage("Roster")}
+                onClick={() =>
+                  setActivePage("Roster")
+                }
               >
                 View all
               </button>
             </div>
-
-            {/* IRRIGATION */}
 
             <div className="dashboard-schedule-row">
               <div className="schedule-circle">
@@ -200,8 +184,6 @@ function Dashboard() {
               </div>
             </div>
 
-            {/* FERTILIZER */}
-
             <div className="dashboard-schedule-row">
               <div className="schedule-circle">
                 <CircleCheck size={17} />
@@ -212,8 +194,6 @@ function Dashboard() {
                 <p>Tomorrow · 9:00 AM</p>
               </div>
             </div>
-
-            {/* HARVEST */}
 
             <div className="dashboard-schedule-row">
               <div className="schedule-circle">
@@ -228,17 +208,15 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* ======================================
-            RECENT CLOCK EVENTS
-        ====================================== */}
-
         <section className="dashboard-panel recent-events">
           <div className="dashboard-panel-heading recent-heading">
             <h3>Recent Clock Events</h3>
 
             <button
               type="button"
-              onClick={() => setActivePage("ClockInOut")}
+              onClick={() =>
+                setActivePage("ClockInOut")
+              }
             >
               View all
             </button>
@@ -257,7 +235,7 @@ function Dashboard() {
 
               <tbody>
                 {clockEvents.map((event, index) => (
-                  <tr key={index}>
+                  <tr key={`${event.employee}-${index}`}>
                     <td>{event.employee}</td>
 
                     <td>
@@ -285,21 +263,12 @@ function Dashboard() {
         </section>
       </div>
     );
-  };
+  }
 
-  // ==========================================
-  // MAIN DASHBOARD
-  // ==========================================
 
   return (
     <div className="dashboard-layout">
-      {/* ======================================
-          SIDEBAR
-      ====================================== */}
-
       <aside className="dashboard-sidebar">
-        {/* LOGO */}
-
         <div className="dashboard-logo">
           <div className="dashboard-logo-icon">
             <Leaf size={22} />
@@ -311,153 +280,149 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* ======================================
-            NAVIGATION
-        ====================================== */}
-
         <nav className="dashboard-nav">
-          {/* DASHBOARD */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "Dashboard" ? "active" : ""
+              activePage === "Dashboard"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("Dashboard")}
+            onClick={() =>
+              setActivePage("Dashboard")
+            }
           >
             <LayoutDashboard size={18} />
-
             <span>Dashboard</span>
           </button>
 
-          {/* EMPLOYEES */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "Employees" ? "active" : ""
+              activePage === "Employees"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("Employees")}
+            onClick={() =>
+              setActivePage("Employees")
+            }
           >
             <Users size={18} />
-
             <span>Employees</span>
           </button>
 
-          {/* CLOCK IN / OUT */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "ClockInOut" ? "active" : ""
+              activePage === "ClockInOut"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("ClockInOut")}
+            onClick={() =>
+              setActivePage("ClockInOut")
+            }
           >
             <Clock3 size={18} />
-
             <span>Clock In/Out</span>
           </button>
 
-          {/* HOURS REPORTING */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "HoursReporting" ? "active" : ""
+              activePage === "HoursReporting"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("HoursReporting")}
+            onClick={() =>
+              setActivePage("HoursReporting")
+            }
           >
             <FileText size={18} />
-
             <span>Hours Reporting</span>
           </button>
 
-          {/* ROSTER */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "Roster" ? "active" : ""
+              activePage === "Roster"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("Roster")}
+            onClick={() =>
+              setActivePage("Roster")
+            }
           >
             <CalendarDays size={18} />
-
             <span>Roster</span>
           </button>
 
-          {/* PAYROLL */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "Payroll" ? "active" : ""
+              activePage === "Payroll"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("Payroll")}
+            onClick={() =>
+              setActivePage("Payroll")
+            }
           >
             <CreditCard size={18} />
-
             <span>Payroll</span>
           </button>
 
-          {/* SETTINGS */}
-
           <button
             type="button"
             className={`dashboard-nav-item ${
-              activePage === "Settings" ? "active" : ""
+              activePage === "Settings"
+                ? "active"
+                : ""
             }`}
-            onClick={() => setActivePage("Settings")}
+            onClick={() =>
+              setActivePage("Settings")
+            }
           >
             <SettingsIcon size={18} />
-
             <span>Settings</span>
           </button>
         </nav>
+
+        <div className="dashboard-sidebar-logout">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+            onClick={onLogout}
+          >
+            <UserRound size={18} />
+            <span>Logout</span>
+          </button>
+        </div>
       </aside>
 
-      {/* ======================================
-          RIGHT SIDE CONTENT
-      ====================================== */}
-
       <main className="dashboard-main-content">
-        {/* DASHBOARD */}
-
         {activePage === "Dashboard" && (
           <DashboardHome />
         )}
-
-        {/* EMPLOYEES */}
 
         {activePage === "Employees" && (
           <Employees />
         )}
 
-        {/* CLOCK IN / OUT */}
-
         {activePage === "ClockInOut" && (
           <ClockInOut />
         )}
-
-        {/* HOURS REPORTING */}
 
         {activePage === "HoursReporting" && (
           <HoursReporting />
         )}
 
-        {/* ROSTER */}
-
         {activePage === "Roster" && (
           <Roster />
         )}
 
-        {/* PAYROLL */}
-
         {activePage === "Payroll" && (
           <Payroll />
         )}
-
-        {/* SETTINGS */}
 
         {activePage === "Settings" && (
           <Settings />
@@ -466,5 +431,6 @@ function Dashboard() {
     </div>
   );
 }
+
 
 export default Dashboard;

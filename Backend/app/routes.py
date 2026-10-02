@@ -1,13 +1,23 @@
 from datetime import date
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint
+from flask import jsonify
+from flask import request
+from flask_login import current_user
+from flask_login import login_required
+from flask_login import login_user
+from flask_login import logout_user
 from sqlalchemy.exc import IntegrityError
 
 from .extensions import db
+from .models import AdminUser
 from .models import Employee
 
 
-main_bp = Blueprint("main", __name__)
+main_bp = Blueprint(
+    "main",
+    __name__
+)
 
 
 @main_bp.get("/api/health")
@@ -18,7 +28,79 @@ def health_check():
     }), 200
 
 
+@main_bp.post("/api/auth/login")
+def admin_login():
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({
+            "error": "Request body must contain JSON data."
+        }), 400
+
+    email = str(
+        data.get("email", "")
+    ).strip().lower()
+
+    password = str(
+        data.get("password", "")
+    )
+
+    if not email or not password:
+        return jsonify({
+            "error": "Email and password are required."
+        }), 400
+
+    admin = AdminUser.query.filter_by(
+        email=email
+    ).first()
+
+    if (
+        admin is None
+        or not admin.is_active
+        or not admin.check_password(password)
+    ):
+        return jsonify({
+            "error": "Invalid email or password."
+        }), 401
+
+    login_user(
+        admin,
+        remember=bool(
+            data.get("remember_me", False)
+        )
+    )
+
+    return jsonify({
+        "message": "Login successful.",
+        "admin": admin.to_dict()
+    }), 200
+
+
+@main_bp.post("/api/auth/logout")
+@login_required
+def admin_logout():
+    logout_user()
+
+    return jsonify({
+        "message": "Logout successful."
+    }), 200
+
+
+@main_bp.get("/api/auth/me")
+def current_admin():
+    if not current_user.is_authenticated:
+        return jsonify({
+            "authenticated": False
+        }), 401
+
+    return jsonify({
+        "authenticated": True,
+        "admin": current_user.to_dict()
+    }), 200
+
+
 @main_bp.post("/api/employees")
+@login_required
 def create_employee():
     data = request.get_json(silent=True)
 
@@ -54,12 +136,29 @@ def create_employee():
             }
         }), 400
 
-    first_name = str(data["first_name"]).strip()
-    last_name = str(data["last_name"]).strip()
-    email = str(data["email"]).strip().lower()
-    phone = str(data.get("phone", "")).strip() or None
-    role = str(data["role"]).strip()
-    contract_type = str(data["contract_type"]).strip()
+    first_name = str(
+        data["first_name"]
+    ).strip()
+
+    last_name = str(
+        data["last_name"]
+    ).strip()
+
+    email = str(
+        data["email"]
+    ).strip().lower()
+
+    phone = str(
+        data.get("phone", "")
+    ).strip() or None
+
+    role = str(
+        data["role"]
+    ).strip()
+
+    contract_type = str(
+        data["contract_type"]
+    ).strip()
 
     validation_error = validate_employee_fields(
         first_name=first_name,
@@ -76,9 +175,50 @@ def create_employee():
     if validation_error:
         return jsonify(validation_error), 400
 
-    existing_employee = Employee.query.filter_by(email=email).first()
+    existing_employee = Employee.query.filter_by(
+        email=email
+    ).first()
 
     if existing_employee:
+        if existing_employee.status == "Inactive":
+            existing_employee.first_name = first_name
+            existing_employee.last_name = last_name
+            existing_employee.phone = phone
+            existing_employee.role = role
+            existing_employee.contract_type = contract_type
+            existing_employee.standard_hours = float(
+                data["standard_hours"]
+            )
+            existing_employee.pay_rate = float(
+                data["pay_rate"]
+            )
+            existing_employee.overtime_pay_rate = float(
+                data["overtime_pay_rate"]
+            )
+            existing_employee.hire_date = date.fromisoformat(
+                str(data["hire_date"])
+            )
+            existing_employee.status = "Active"
+
+            try:
+                db.session.commit()
+            except IntegrityError:
+                db.session.rollback()
+
+                return jsonify({
+                    "error": (
+                        "The inactive employee could not "
+                        "be reactivated."
+                    )
+                }), 409
+
+            return jsonify({
+                "message": (
+                    "Inactive employee reactivated successfully."
+                ),
+                "employee": existing_employee.to_dict()
+            }), 200
+
         return jsonify({
             "error": "An employee with this email already exists."
         }), 409
@@ -90,11 +230,19 @@ def create_employee():
         phone=phone,
         role=role,
         contract_type=contract_type,
-        standard_hours=float(data["standard_hours"]),
-        pay_rate=float(data["pay_rate"]),
-        overtime_pay_rate=float(data["overtime_pay_rate"]),
+        standard_hours=float(
+            data["standard_hours"]
+        ),
+        pay_rate=float(
+            data["pay_rate"]
+        ),
+        overtime_pay_rate=float(
+            data["overtime_pay_rate"]
+        ),
         status="Active",
-        hire_date=date.fromisoformat(str(data["hire_date"]))
+        hire_date=date.fromisoformat(
+            str(data["hire_date"])
+        )
     )
 
     try:
@@ -110,10 +258,13 @@ def create_employee():
             )
         }), 409
 
-    return jsonify(employee.to_dict()), 201
+    return jsonify(
+        employee.to_dict()
+    ), 201
 
 
 @main_bp.get("/api/employees")
+@login_required
 def list_employees():
     employees = Employee.query.filter_by(
         status="Active"
@@ -128,8 +279,12 @@ def list_employees():
 
 
 @main_bp.put("/api/employees/<int:employee_id>")
+@login_required
 def update_employee(employee_id):
-    employee = db.session.get(Employee, employee_id)
+    employee = db.session.get(
+        Employee,
+        employee_id
+    )
 
     if employee is None:
         return jsonify({
@@ -170,12 +325,29 @@ def update_employee(employee_id):
             }
         }), 400
 
-    first_name = str(data["first_name"]).strip()
-    last_name = str(data["last_name"]).strip()
-    email = str(data["email"]).strip().lower()
-    phone = str(data.get("phone", "")).strip() or None
-    role = str(data["role"]).strip()
-    contract_type = str(data["contract_type"]).strip()
+    first_name = str(
+        data["first_name"]
+    ).strip()
+
+    last_name = str(
+        data["last_name"]
+    ).strip()
+
+    email = str(
+        data["email"]
+    ).strip().lower()
+
+    phone = str(
+        data.get("phone", "")
+    ).strip() or None
+
+    role = str(
+        data["role"]
+    ).strip()
+
+    contract_type = str(
+        data["contract_type"]
+    ).strip()
 
     validation_error = validate_employee_fields(
         first_name=first_name,
@@ -208,10 +380,18 @@ def update_employee(employee_id):
     employee.phone = phone
     employee.role = role
     employee.contract_type = contract_type
-    employee.standard_hours = float(data["standard_hours"])
-    employee.pay_rate = float(data["pay_rate"])
-    employee.overtime_pay_rate = float(data["overtime_pay_rate"])
-    employee.hire_date = date.fromisoformat(str(data["hire_date"]))
+    employee.standard_hours = float(
+        data["standard_hours"]
+    )
+    employee.pay_rate = float(
+        data["pay_rate"]
+    )
+    employee.overtime_pay_rate = float(
+        data["overtime_pay_rate"]
+    )
+    employee.hire_date = date.fromisoformat(
+        str(data["hire_date"])
+    )
 
     try:
         db.session.commit()
@@ -225,12 +405,20 @@ def update_employee(employee_id):
             )
         }), 409
 
-    return jsonify(employee.to_dict()), 200
+    return jsonify(
+        employee.to_dict()
+    ), 200
 
 
-@main_bp.patch("/api/employees/<int:employee_id>/deactivate")
+@main_bp.patch(
+    "/api/employees/<int:employee_id>/deactivate"
+)
+@login_required
 def deactivate_employee(employee_id):
-    employee = db.session.get(Employee, employee_id)
+    employee = db.session.get(
+        Employee,
+        employee_id
+    )
 
     if employee is None:
         return jsonify({
@@ -305,22 +493,45 @@ def validate_employee_fields(
         )
 
     try:
-        standard_hours_value = float(standard_hours)
-        pay_rate_value = float(pay_rate)
-        overtime_pay_rate_value = float(overtime_pay_rate)
-    except (TypeError, ValueError):
-        details["standard_hours"] = "Must be a number."
-        details["pay_rate"] = "Must be a number."
-        details["overtime_pay_rate"] = "Must be a number."
+        standard_hours_value = float(
+            standard_hours
+        )
+
+        pay_rate_value = float(
+            pay_rate
+        )
+
+        overtime_pay_rate_value = float(
+            overtime_pay_rate
+        )
+    except (
+        TypeError,
+        ValueError
+    ):
+        details["standard_hours"] = (
+            "Must be a number."
+        )
+
+        details["pay_rate"] = (
+            "Must be a number."
+        )
+
+        details["overtime_pay_rate"] = (
+            "Must be a number."
+        )
     else:
         if not 0 <= standard_hours_value <= 60:
             details["standard_hours"] = (
                 "Must be between 0 and 60."
             )
 
-        if pay_rate_value <= 0 or pay_rate_value > 999.99:
+        if (
+            pay_rate_value <= 0
+            or pay_rate_value > 999.99
+        ):
             details["pay_rate"] = (
-                "Must be greater than 0 and no more than 999.99."
+                "Must be greater than 0 "
+                "and no more than 999.99."
             )
 
         if (
@@ -333,9 +544,13 @@ def validate_employee_fields(
             )
 
     try:
-        date.fromisoformat(str(hire_date_value))
+        date.fromisoformat(
+            str(hire_date_value)
+        )
     except ValueError:
-        details["hire_date"] = "Must use YYYY-MM-DD format."
+        details["hire_date"] = (
+            "Must use YYYY-MM-DD format."
+        )
 
     if details:
         return {

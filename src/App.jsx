@@ -1,36 +1,181 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import Dashboard from "./Pages/Dashboard";
 
+
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [admin, setAdmin] = useState(null);
+  const [isCheckingSession, setIsCheckingSession] =
+    useState(true);
+  const [showPassword, setShowPassword] =
+    useState(false);
+  const [rememberMe, setRememberMe] =
+    useState(false);
+  const [loginError, setLoginError] =
+    useState("");
+  const [isLoggingIn, setIsLoggingIn] =
+    useState(false);
 
-  const handleLogin = (e) => {
-    e.preventDefault();
 
-    // Frontend only for now.
-    // No email/password validation.
-    setIsLoggedIn(true);
-  };
+  useEffect(() => {
+    checkCurrentSession();
+  }, []);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-  };
 
-  // =========================
-  // LOGIN PAGE
-  // =========================
+  async function readResponse(response) {
+    const contentType =
+      response.headers.get("content-type") || "";
 
-  if (!isLoggedIn) {
+    if (contentType.includes("application/json")) {
+      return response.json();
+    }
+
+    return {
+      error: `Request failed with status ${response.status}.`
+    };
+  }
+
+
+  async function checkCurrentSession() {
+    try {
+      const response = await fetch(
+        "/api/auth/me",
+        {
+          method: "GET",
+          credentials: "include"
+        }
+      );
+
+      if (!response.ok) {
+        setAdmin(null);
+        return;
+      }
+
+      const data = await readResponse(response);
+
+      if (data.authenticated && data.admin) {
+        setAdmin(data.admin);
+      } else {
+        setAdmin(null);
+      }
+    } catch {
+      setAdmin(null);
+    } finally {
+      setIsCheckingSession(false);
+    }
+  }
+
+
+  async function handleLogin(event) {
+    event.preventDefault();
+
+    if (isLoggingIn) {
+      return;
+    }
+
+    const formData = new FormData(
+      event.currentTarget
+    );
+
+    const email = String(
+      formData.get("email") || ""
+    ).trim();
+
+    const password = String(
+      formData.get("password") || ""
+    );
+
+    setLoginError("");
+    setIsLoggingIn(true);
+
+    try {
+      const response = await fetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            email,
+            password,
+            remember_me: rememberMe
+          })
+        }
+      );
+
+      const data = await readResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Login failed."
+        );
+      }
+
+      if (!data.admin) {
+        throw new Error(
+          "Login succeeded, but no admin account was returned."
+        );
+      }
+
+      setAdmin(data.admin);
+    } catch (error) {
+      setLoginError(
+        error.message ||
+        "Unable to connect to the backend."
+      );
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }
+
+
+  async function handleLogout() {
+    try {
+      await fetch(
+        "/api/auth/logout",
+        {
+          method: "POST",
+          credentials: "include"
+        }
+      );
+    } catch {
+      // Clear the frontend session even if the server request fails.
+    } finally {
+      setAdmin(null);
+      setLoginError("");
+    }
+  }
+
+
+  function clearLoginError() {
+    if (loginError) {
+      setLoginError("");
+    }
+  }
+
+
+  if (isCheckingSession) {
+    return (
+      <div className="login-page">
+        <main className="login-main">
+          <section className="login-card">
+            <p>Checking login...</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+
+  if (!admin) {
     return (
       <div className="login-page">
         <main className="login-main">
           <div className="background-overlay"></div>
 
           <section className="login-card">
-            {/* Logo */}
             <div className="login-logo">
               <span>⌁</span>
             </div>
@@ -46,43 +191,76 @@ function App() {
               <p>Login to your account</p>
             </div>
 
+            {loginError && (
+              <p
+                className="login-error"
+                role="alert"
+              >
+                {loginError}
+              </p>
+            )}
+
             <form onSubmit={handleLogin}>
-              {/* Email */}
               <div className="input-wrapper">
-                <span className="input-icon">✉</span>
+                <span className="input-icon">
+                  ✉
+                </span>
 
                 <input
                   type="email"
+                  name="email"
                   placeholder="Email address"
+                  autoComplete="email"
+                  onChange={clearLoginError}
+                  required
                 />
               </div>
 
-              {/* Password */}
               <div className="input-wrapper">
-                <span className="input-icon">♙</span>
+                <span className="input-icon">
+                  ♙
+                </span>
 
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  name="password"
                   placeholder="Password"
+                  autoComplete="current-password"
+                  onChange={clearLoginError}
+                  required
                 />
 
                 <button
                   type="button"
                   className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() =>
+                    setShowPassword(
+                      (current) => !current
+                    )
+                  }
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
                 >
                   {showPassword ? "◉" : "◌"}
                 </button>
               </div>
 
-              {/* Remember/Forgot */}
               <div className="form-options">
                 <label className="remember">
                   <input
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) =>
-                      setRememberMe(e.target.checked)
+                    onChange={(event) =>
+                      setRememberMe(
+                        event.target.checked
+                      )
                     }
                   />
 
@@ -92,18 +270,22 @@ function App() {
                 <a
                   href="#"
                   className="forgot-link"
-                  onClick={(e) => e.preventDefault()}
+                  onClick={(event) =>
+                    event.preventDefault()
+                  }
                 >
                   Forgot Password?
                 </a>
               </div>
 
-              {/* Login */}
               <button
                 type="submit"
                 className="login-button"
+                disabled={isLoggingIn}
               >
-                Login
+                {isLoggingIn
+                  ? "Logging in..."
+                  : "Login"}
               </button>
             </form>
 
@@ -111,14 +293,24 @@ function App() {
               Don't have an account?{" "}
               <a
                 href="#"
-                onClick={(e) => e.preventDefault()}
+                onClick={(event) =>
+                  event.preventDefault()
+                }
               >
                 Sign up
               </a>
             </p>
           </section>
 
-          <button className="help-button">
+          <button
+            type="button"
+            className="help-button"
+            onClick={() =>
+              alert(
+                "Please contact the system administrator."
+              )
+            }
+          >
             ?
           </button>
         </main>
@@ -126,11 +318,14 @@ function App() {
     );
   }
 
-  // =========================
-  // AFTER LOGIN
-  // =========================
 
-  return <Dashboard onLogout={handleLogout} />;
+  return (
+    <Dashboard
+      admin={admin}
+      onLogout={handleLogout}
+    />
+  );
 }
+
 
 export default App;

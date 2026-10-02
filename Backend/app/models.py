@@ -1,38 +1,90 @@
-from datetime import date, datetime, timezone
+from datetime import date
+from datetime import datetime
+
+from flask_login import UserMixin
+from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash
 
 from .extensions import db
 
 
 class Employee(db.Model):
-    __tablename__ = "employee"
+    __tablename__ = "employees"
 
-    employee_id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    phone = db.Column(db.String(30), nullable=True)
-    role = db.Column(db.String(50), nullable=False)
-    contract_type = db.Column(db.String(20), nullable=False)
-    standard_hours = db.Column(db.Numeric(5, 2), nullable=False)
-    pay_rate = db.Column(db.Numeric(10, 2), nullable=False)
-    overtime_pay_rate = db.Column(db.Numeric(10, 2), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default="Active")
-    hire_date = db.Column(db.Date, nullable=False, default=date.today)
-    created_at = db.Column(
-        db.DateTime(timezone=True),
+    employee_id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    first_name = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    last_name = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    email = db.Column(
+        db.String(120),
+        unique=True,
+        nullable=False
+    )
+
+    phone = db.Column(
+        db.String(30),
+        nullable=True
+    )
+
+    role = db.Column(
+        db.String(50),
+        nullable=False
+    )
+
+    contract_type = db.Column(
+        db.String(30),
+        nullable=False
+    )
+
+    standard_hours = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    pay_rate = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    overtime_pay_rate = db.Column(
+        db.Float,
+        nullable=False
+    )
+
+    status = db.Column(
+        db.String(20),
         nullable=False,
-        default=lambda: datetime.now(timezone.utc)
-    )
-    updated_at = db.Column(
-        db.DateTime(timezone=True),
-        nullable=True,
-        onupdate=lambda: datetime.now(timezone.utc)
+        default="Active"
     )
 
-    user = db.relationship(
-        "User",
-        back_populates="employee",
-        uselist=False
+    hire_date = db.Column(
+        db.Date,
+        nullable=False,
+        default=date.today
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
     )
 
     def to_dict(self):
@@ -44,39 +96,95 @@ class Employee(db.Model):
             "phone": self.phone,
             "role": self.role,
             "contract_type": self.contract_type,
-            "standard_hours": float(self.standard_hours),
-            "pay_rate": float(self.pay_rate),
-            "overtime_pay_rate": float(self.overtime_pay_rate),
+            "standard_hours": self.standard_hours,
+            "pay_rate": self.pay_rate,
+            "overtime_pay_rate": self.overtime_pay_rate,
             "status": self.status,
             "hire_date": (
                 self.hire_date.isoformat()
-                if self.hire_date else None
+                if self.hire_date
+                else None
             ),
             "created_at": (
                 self.created_at.isoformat()
-                if self.created_at else None
+                if self.created_at
+                else None
             ),
             "updated_at": (
                 self.updated_at.isoformat()
-                if self.updated_at else None
+                if self.updated_at
+                else None
             )
         }
 
 
-class User(db.Model):
-    __tablename__ = "user"
+class AdminUser(UserMixin, db.Model):
+    __tablename__ = "admin_users"
 
-    user_id = db.Column(db.Integer, primary_key=True)
-    employee_id = db.Column(
+    admin_id = db.Column(
         db.Integer,
-        db.ForeignKey("employee.employee_id"),
+        primary_key=True
+    )
+
+    email = db.Column(
+        db.String(120),
         unique=True,
         nullable=False
     )
-    password_hash = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default="Admin")
 
-    employee = db.relationship(
-        "Employee",
-        back_populates="user"
+    password_hash = db.Column(
+        db.String(255),
+        nullable=False
     )
+
+    full_name = db.Column(
+        db.String(100),
+        nullable=False
+    )
+
+    role = db.Column(
+        db.String(30),
+        nullable=False,
+        default="Admin"
+    )
+
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(
+            password,
+            method="scrypt"
+        )
+
+    def check_password(self, password):
+        return check_password_hash(
+            self.password_hash,
+            password
+        )
+
+    def get_id(self):
+        return str(self.admin_id)
+
+    def to_dict(self):
+        return {
+            "admin_id": self.admin_id,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role,
+            "is_active": self.is_active,
+            "created_at": (
+                self.created_at.isoformat()
+                if self.created_at
+                else None
+            )
+        }

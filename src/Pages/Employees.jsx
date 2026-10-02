@@ -1,171 +1,317 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Search,
-  Plus,
   Pencil,
-  Trash2,
-  X,
+  Plus,
+  Search,
+  X
 } from "lucide-react";
-
 import "../styles/Employees.css";
 
+
+const emptyForm = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  role: "",
+  contract_type: "Full Time",
+  standard_hours: "38",
+  pay_rate: "",
+  overtime_pay_rate: "",
+  hire_date: ""
+};
+
+
 function Employees() {
+  const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState("");
-  const [showAddEmployee, setShowAddEmployee] = useState(false);
+  const [showEmployeeModal, setShowEmployeeModal] =
+    useState(false);
+  const [editingEmployee, setEditingEmployee] =
+    useState(null);
+  const [form, setForm] = useState(emptyForm);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const [employees, setEmployees] = useState([
-    {
-      id: "EMP-001",
-      name: "John Doe",
-      role: "Field Supervisor",
-      contract: "Full Time",
-      payRate: "$28.00/hr",
-      status: "Active",
-    },
-    {
-      id: "EMP-002",
-      name: "Mary Smith",
-      role: "Irrigation Technician",
-      contract: "Full Time",
-      payRate: "$22.50/hr",
-      status: "Active",
-    },
-    {
-      id: "EMP-003",
-      name: "Robert Brown",
-      role: "Seasonal Labourer",
-      contract: "Casual",
-      payRate: "$18.00/hr",
-      status: "Active",
-    },
-    {
-      id: "EMP-004",
-      name: "Linda White",
-      role: "Pest Control Officer",
-      contract: "Part Time",
-      payRate: "$24.00/hr",
-      status: "Inactive",
-    },
-    {
-      id: "EMP-005",
-      name: "David Green",
-      role: "Harvest Coordinator",
-      contract: "Full Time",
-      payRate: "$31.00/hr",
-      status: "Active",
-    },
-  ]);
 
-  const [newEmployee, setNewEmployee] = useState({
-    name: "",
-    role: "",
-    contract: "Full Time",
-    payRate: "",
-    status: "Active",
-  });
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
-  // ==========================================
-  // SEARCH
-  // ==========================================
 
-  const filteredEmployees = employees.filter((employee) => {
-    const searchText = search.toLowerCase();
+  async function loadEmployees() {
+  setLoading(true);
+  setError("");
 
-    return (
-      employee.id.toLowerCase().includes(searchText) ||
-      employee.name.toLowerCase().includes(searchText) ||
-      employee.role.toLowerCase().includes(searchText) ||
-      employee.contract.toLowerCase().includes(searchText) ||
-      employee.status.toLowerCase().includes(searchText)
+  try {
+    const response = await fetch(
+      "/api/employees",
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Accept: "application/json"
+        }
+      }
     );
-  });
 
-  // ==========================================
-  // DELETE EMPLOYEE
-  // ==========================================
+    const contentType =
+      response.headers.get("content-type") || "";
 
-  const handleDelete = (id) => {
-    setEmployees((currentEmployees) =>
-      currentEmployees.filter((employee) => employee.id !== id)
-    );
-  };
+    const responseText = await response.text();
 
-  // ==========================================
-  // INPUT CHANGE
-  // ==========================================
+    if (!contentType.includes("application/json")) {
+      throw new Error(
+        `The backend returned HTML instead of JSON. ` +
+        `HTTP status: ${response.status}. ` +
+        `Check Flask and the Vite proxy.`
+      );
+    }
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const data = JSON.parse(responseText);
 
-    setNewEmployee((previousEmployee) => ({
-      ...previousEmployee,
-      [name]: value,
-    }));
-  };
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Failed to load employees."
+      );
+    }
 
-  // ==========================================
-  // ADD EMPLOYEE
-  // ==========================================
+    setEmployees(data);
+  } catch (loadError) {
+    setEmployees([]);
+    setError(loadError.message);
+  } finally {
+    setLoading(false);
+  }
+}
 
-  const handleAddEmployee = (e) => {
-    e.preventDefault();
 
-    const employeeNumber = String(employees.length + 1).padStart(3, "0");
+  function openAddModal() {
+    setEditingEmployee(null);
+    setForm(emptyForm);
+    setError("");
+    setMessage("");
+    setShowEmployeeModal(true);
+  }
 
-    const employee = {
-      id: `EMP-${employeeNumber}`,
-      name: newEmployee.name,
-      role: newEmployee.role,
-      contract: newEmployee.contract,
-      payRate: newEmployee.payRate.startsWith("$")
-        ? newEmployee.payRate
-        : `$${newEmployee.payRate}/hr`,
-      status: newEmployee.status,
-    };
 
-    setEmployees((currentEmployees) => [
-      ...currentEmployees,
-      employee,
-    ]);
+  function openEditModal(employee) {
+    setEditingEmployee(employee);
 
-    setNewEmployee({
-      name: "",
-      role: "",
-      contract: "Full Time",
-      payRate: "",
-      status: "Active",
+    setForm({
+      first_name: employee.first_name || "",
+      last_name: employee.last_name || "",
+      email: employee.email || "",
+      phone: employee.phone || "",
+      role: employee.role || "",
+      contract_type:
+        employee.contract_type || "Full Time",
+      standard_hours: String(
+        employee.standard_hours ?? ""
+      ),
+      pay_rate: String(
+        employee.pay_rate ?? ""
+      ),
+      overtime_pay_rate: String(
+        employee.overtime_pay_rate ?? ""
+      ),
+      hire_date: employee.hire_date || ""
     });
 
-    setShowAddEmployee(false);
-  };
+    setError("");
+    setMessage("");
+    setShowEmployeeModal(true);
+  }
+
+
+  function closeModal() {
+    setShowEmployeeModal(false);
+    setEditingEmployee(null);
+    setForm(emptyForm);
+  }
+
+
+  function handleInputChange(event) {
+    const { name, value } = event.target;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value
+    }));
+  }
+
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    const payload = {
+      ...form,
+      standard_hours: Number(
+        form.standard_hours
+      ),
+      pay_rate: Number(
+        form.pay_rate
+      ),
+      overtime_pay_rate: Number(
+        form.overtime_pay_rate
+      )
+    };
+
+    const url = editingEmployee
+      ? `/api/employees/${editingEmployee.employee_id}`
+      : "/api/employees";
+
+    const method = editingEmployee
+      ? "PUT"
+      : "POST";
+
+    try {
+      const response = await fetch(
+        url,
+        {
+          method,
+          headers: {
+            "Content-Type": "application/json"
+          },
+          credentials: "include",
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Unable to save employee."
+        );
+      }
+
+      setMessage(
+        data.message ||
+        (
+          editingEmployee
+            ? "Employee updated successfully."
+            : "Employee created successfully."
+        )
+      );
+
+      closeModal();
+      await loadEmployees();
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  async function handleDeactivate(employeeId) {
+    const confirmed = window.confirm(
+      "Deactivate this employee?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        `/api/employees/${employeeId}/deactivate`,
+        {
+          method: "PATCH",
+          credentials: "include"
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          "Unable to deactivate employee."
+        );
+      }
+
+      setMessage(
+        "Employee deactivated successfully."
+      );
+
+      await loadEmployees();
+    } catch (deactivateError) {
+      setError(deactivateError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+
+  const filteredEmployees = useMemo(() => {
+    const searchText = search.toLowerCase();
+
+    return employees.filter((employee) => {
+      const fullName = [
+        employee.first_name,
+        employee.last_name
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        fullName.includes(searchText) ||
+        employee.email
+          .toLowerCase()
+          .includes(searchText) ||
+        employee.role
+          .toLowerCase()
+          .includes(searchText) ||
+        employee.contract_type
+          .toLowerCase()
+          .includes(searchText)
+      );
+    });
+  }, [employees, search]);
+
 
   return (
     <div className="employees-page">
-      {/* ======================================
-          HEADER
-      ====================================== */}
-
       <div className="employees-header">
         <h1>Employees</h1>
 
         <button
           type="button"
           className="add-employee-btn"
-          onClick={() => setShowAddEmployee(true)}
+          onClick={openAddModal}
         >
           <Plus size={17} />
-
           <span>Add Employee</span>
         </button>
       </div>
 
-      {/* ======================================
-          EMPLOYEE CARD
-      ====================================== */}
+      {error && (
+        <p className="error-message" role="alert">
+          {error}
+        </p>
+      )}
+
+      {message && (
+        <p
+          className="success-message"
+          role="status"
+        >
+          {message}
+        </p>
+      )}
 
       <section className="employees-card">
-        {/* SEARCH */}
-
         <div className="employees-search-section">
           <div className="employees-search-box">
             <Search size={16} />
@@ -174,14 +320,12 @@ function Employees() {
               type="text"
               placeholder="Search employees..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </div>
         </div>
-
-        {/* ==================================
-            EMPLOYEE TABLE
-        ================================== */}
 
         <div className="employees-table-wrapper">
           <table className="employees-table">
@@ -189,6 +333,7 @@ function Employees() {
               <tr>
                 <th>Employee ID</th>
                 <th>Name</th>
+                <th>Email</th>
                 <th>Role</th>
                 <th>Contract Type</th>
                 <th>Pay Rate</th>
@@ -198,60 +343,60 @@ function Employees() {
             </thead>
 
             <tbody>
-              {filteredEmployees.length > 0 ? (
+              {loading && (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="no-employees"
+                  >
+                    Loading employees...
+                  </td>
+                </tr>
+              )}
+
+              {!loading &&
                 filteredEmployees.map((employee) => (
-                  <tr key={employee.id}>
-                    {/* ID */}
-
+                  <tr
+                    key={employee.employee_id}
+                  >
                     <td className="employee-id">
-                      {employee.id}
+                      {employee.employee_id}
                     </td>
-
-                    {/* NAME */}
 
                     <td className="employee-name">
-                      {employee.name}
+                      {employee.first_name}{" "}
+                      {employee.last_name}
                     </td>
 
-                    {/* ROLE */}
+                    <td>{employee.email}</td>
 
-                    <td>
-                      {employee.role}
-                    </td>
-
-                    {/* CONTRACT */}
-
-                    <td>
-                      <span
-                        className={`contract-badge ${employee.contract
-                          .toLowerCase()
-                          .replace(" ", "-")}`}
-                      >
-                        {employee.contract}
-                      </span>
-                    </td>
-
-                    {/* PAY */}
-
-                    <td>
-                      {employee.payRate}
-                    </td>
-
-                    {/* STATUS */}
+                    <td>{employee.role}</td>
 
                     <td>
                       <span
                         className={
-                          employee.status === "Active"
-                            ? "employee-status active"
-                            : "employee-status inactive"
+                          "contract-badge " +
+                          employee.contract_type
+                            .toLowerCase()
+                            .replace(" ", "-")
                         }
                       >
-                        {employee.status}
+                        {employee.contract_type}
                       </span>
                     </td>
 
-                    {/* ACTION */}
+                    <td>
+                      $
+                      {Number(
+                        employee.pay_rate
+                      ).toFixed(2)}
+                    </td>
+
+                    <td>
+                      <span className="employee-status active">
+                        {employee.status}
+                      </span>
+                    </td>
 
                     <td>
                       <div className="employee-actions">
@@ -259,6 +404,11 @@ function Employees() {
                           type="button"
                           className="employee-action-btn"
                           title="Edit employee"
+                          onClick={() =>
+                            openEditModal(
+                              employee
+                            )
+                          }
                         >
                           <Pencil size={14} />
                         </button>
@@ -266,113 +416,141 @@ function Employees() {
                         <button
                           type="button"
                           className="employee-action-btn delete"
-                          title="Delete employee"
                           onClick={() =>
-                            handleDelete(employee.id)
+                            handleDeactivate(
+                              employee.employee_id
+                            )
                           }
                         >
-                          <Trash2 size={14} />
+                          Deactivate
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="no-employees"
-                  >
-                    No employees found
-                  </td>
-                </tr>
-              )}
+                ))}
+
+              {!loading &&
+                filteredEmployees.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      className="no-employees"
+                    >
+                      No active employees found.
+                    </td>
+                  </tr>
+                )}
             </tbody>
           </table>
         </div>
 
-        {/* ==================================
-            FOOTER
-        ================================== */}
-
         <div className="employees-footer">
           Showing {filteredEmployees.length} of{" "}
-          {employees.length} employees
+          {employees.length} active employees
         </div>
       </section>
 
-      {/* ======================================
-          ADD EMPLOYEE MODAL
-      ====================================== */}
-
-      {showAddEmployee && (
+      {showEmployeeModal && (
         <div className="employee-modal-overlay">
           <div className="employee-modal">
-            {/* Modal Header */}
-
             <div className="employee-modal-header">
-              <h2>Add Employee</h2>
+              <h2>
+                {editingEmployee
+                  ? "Edit Employee"
+                  : "Add Employee"}
+              </h2>
 
               <button
                 type="button"
                 className="close-modal-btn"
-                onClick={() => setShowAddEmployee(false)}
+                onClick={closeModal}
               >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Form */}
-
-            <form onSubmit={handleAddEmployee}>
-              {/* NAME */}
-
+            <form onSubmit={handleSubmit}>
               <div className="employee-form-group">
-                <label htmlFor="employee-name">
-                  Employee Name
+                <label htmlFor="first_name">
+                  First name
                 </label>
 
                 <input
-                  id="employee-name"
-                  type="text"
-                  name="name"
-                  placeholder="Enter employee name"
-                  value={newEmployee.name}
+                  id="first_name"
+                  name="first_name"
+                  value={form.first_name}
                   onChange={handleInputChange}
                   required
                 />
               </div>
 
-              {/* ROLE */}
+              <div className="employee-form-group">
+                <label htmlFor="last_name">
+                  Last name
+                </label>
+
+                <input
+                  id="last_name"
+                  name="last_name"
+                  value={form.last_name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
               <div className="employee-form-group">
-                <label htmlFor="employee-role">
+                <label htmlFor="email">
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="employee-form-group">
+                <label htmlFor="phone">
+                  Phone
+                </label>
+
+                <input
+                  id="phone"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="employee-form-group">
+                <label htmlFor="role">
                   Role
                 </label>
 
                 <input
-                  id="employee-role"
-                  type="text"
+                  id="role"
                   name="role"
-                  placeholder="Enter employee role"
-                  value={newEmployee.role}
+                  value={form.role}
                   onChange={handleInputChange}
                   required
                 />
               </div>
 
-              {/* CONTRACT */}
-
               <div className="employee-form-group">
-                <label htmlFor="employee-contract">
-                  Contract Type
+                <label htmlFor="contract_type">
+                  Contract type
                 </label>
 
                 <select
-                  id="employee-contract"
-                  name="contract"
-                  value={newEmployee.contract}
+                  id="contract_type"
+                  name="contract_type"
+                  value={form.contract_type}
                   onChange={handleInputChange}
+                  required
                 >
                   <option value="Full Time">
                     Full Time
@@ -388,57 +566,78 @@ function Employees() {
                 </select>
               </div>
 
-              {/* PAY RATE */}
-
               <div className="employee-form-group">
-                <label htmlFor="employee-pay">
-                  Pay Rate
+                <label htmlFor="standard_hours">
+                  Standard hours
                 </label>
 
                 <input
-                  id="employee-pay"
+                  id="standard_hours"
                   type="number"
-                  name="payRate"
-                  placeholder="Example: 28.00"
+                  name="standard_hours"
+                  value={form.standard_hours}
+                  onChange={handleInputChange}
+                  min="0"
+                  max="60"
+                  step="0.5"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-group">
+                <label htmlFor="pay_rate">
+                  Pay rate
+                </label>
+
+                <input
+                  id="pay_rate"
+                  type="number"
+                  name="pay_rate"
+                  value={form.pay_rate}
+                  onChange={handleInputChange}
+                  min="0.01"
                   step="0.01"
-                  value={newEmployee.payRate}
+                  required
+                />
+              </div>
+
+              <div className="employee-form-group">
+                <label htmlFor="overtime_pay_rate">
+                  Overtime pay rate
+                </label>
+
+                <input
+                  id="overtime_pay_rate"
+                  type="number"
+                  name="overtime_pay_rate"
+                  value={form.overtime_pay_rate}
+                  onChange={handleInputChange}
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-group">
+                <label htmlFor="hire_date">
+                  Hire date
+                </label>
+
+                <input
+                  id="hire_date"
+                  type="date"
+                  name="hire_date"
+                  value={form.hire_date}
                   onChange={handleInputChange}
                   required
                 />
               </div>
 
-              {/* STATUS */}
-
-              <div className="employee-form-group">
-                <label htmlFor="employee-status">
-                  Status
-                </label>
-
-                <select
-                  id="employee-status"
-                  name="status"
-                  value={newEmployee.status}
-                  onChange={handleInputChange}
-                >
-                  <option value="Active">
-                    Active
-                  </option>
-
-                  <option value="Inactive">
-                    Inactive
-                  </option>
-                </select>
-              </div>
-
-              {/* BUTTONS */}
-
               <div className="employee-modal-actions">
                 <button
                   type="button"
                   className="employee-cancel-btn"
-                  onClick={() =>
-                    setShowAddEmployee(false)
-                  }
+                  onClick={closeModal}
                 >
                   Cancel
                 </button>
@@ -446,8 +645,13 @@ function Employees() {
                 <button
                   type="submit"
                   className="employee-save-btn"
+                  disabled={loading}
                 >
-                  Add Employee
+                  {loading
+                    ? "Saving..."
+                    : editingEmployee
+                      ? "Save Changes"
+                      : "Add Employee"}
                 </button>
               </div>
             </form>
@@ -457,5 +661,6 @@ function Employees() {
     </div>
   );
 }
+
 
 export default Employees;
