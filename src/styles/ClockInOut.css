@@ -1,0 +1,480 @@
+/* =========================================
+   CLOCK IN / OUT PAGE
+========================================= */
+
+.clock-page {
+  width: 100%;
+}
+
+
+/* =========================================
+   PAGE HEADER
+========================================= */
+
+.clock-page .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 25px;
+}
+
+.clock-page .page-header h1 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.clock-page .page-header p {
+  margin: 0;
+
+  color: #9098aa;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   CLOCK CARD
+========================================= */
+
+.clock-page .clock-card {
+  width: 100%;
+  min-height: 440px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  padding: 30px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e5e9;
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================
+   EMPLOYEE AVATAR
+========================================= */
+
+.clock-page .employee-avatar {
+  width: 62px;
+  height: 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 10px;
+
+  border-radius: 50%;
+
+  background: #287347;
+
+  color: #ffffff;
+
+  font-size: 20px;
+  font-weight: bold;
+}
+
+
+/* =========================================
+   EMPLOYEE INFORMATION
+========================================= */
+
+.clock-page .clock-card h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.clock-page .employee-role {
+  margin: 4px 0 20px;
+
+  color: #9298aa;
+
+  font-size: 14px;
+}
+
+
+/* =========================================
+   CURRENT TIME
+========================================= */
+
+.clock-page .current-time {
+  margin-bottom: 20px;
+
+  color: #172033;
+
+  font-size: 38px;
+  font-weight: 700;
+}
+
+
+/* =========================================
+   STATUS
+========================================= */
+
+.clock-page .status-container {
+  display: flex;
+
+  gap: 10px;
+
+  margin-bottom: 24px;
+}
+
+.clock-page .status {
+  padding: 6px 13px;
+
+  border-radius: 20px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+
+/* Clocked In */
+
+.clock-page .status.active {
+  background: #d9f9e5;
+
+  color: #00883e;
+}
+
+
+/* Clocked Out */
+
+.clock-page .status.inactive {
+  background: #ffe0e0;
+
+  color: #c81919;
+}
+
+
+/* Compliance */
+
+.clock-page .status.compliance {
+  background: #fff0da;
+
+  color: #f26a16;
+}
+
+
+/* =========================================
+   STATION
+========================================= */
+
+.clock-page .station-container {
+  width: 310px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.clock-page .station-container label {
+  margin-bottom: 7px;
+
+  color: #657087;
+
+  font-size: 12px;
+
+  text-align: center;
+}
+
+
+/* Dropdown */
+
+.clock-page .station-container select {
+  width: 100%;
+  height: 42px;
+
+  padding: 0 12px;
+
+  border: 1px solid #ccd2da;
+  border-radius: 7px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #172033;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  cursor: pointer;
+}
+
+.clock-page .station-container select:focus {
+  border-color: #287347;
+
+  box-shadow: 0 0 0 2px rgba(40, 115, 71, 0.12);
+}
+
+
+/* =========================================
+   CLOCK IN / OUT BUTTON
+========================================= */
+
+.clock-page .clock-out-btn,
+.clock-page .clock-in-btn {
+  width: 100%;
+  height: 48px;
+
+  margin-top: 22px;
+
+  border: none;
+  border-radius: 7px;
+
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: bold;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+
+/* CLOCK OUT */
+
+.clock-page .clock-out-btn {
+  background: #c81919;
+}
+
+.clock-page .clock-out-btn:hover {
+  background: #aa1414;
+}
+
+
+/* CLOCK IN */
+
+.clock-page .clock-in-btn {
+  background: #198754;
+}
+
+.clock-page .clock-in-btn:hover {
+  background: #146c43;
+}
+
+.clock-page .clock-out-btn:active,
+.clock-page .clock-in-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================================
+   ACTIVITY CARD
+========================================= */
+
+.clock-page .activity-card {
+  width: 100%;
+
+  margin-top: 20px;
+
+  overflow: hidden;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e5e9;
+  border-radius: 10px;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.clock-page .activity-card h3 {
+  margin: 0;
+
+  padding: 17px;
+
+  color: #172033;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+
+/* =========================================
+   TABLE WRAPPER
+========================================= */
+
+.clock-page .activity-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+
+/* =========================================
+   ACTIVITY TABLE
+========================================= */
+
+.clock-page .activity-card table {
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+
+/* Table Header */
+
+.clock-page .activity-card th {
+  padding: 13px 17px;
+
+  background: #f8f9fa;
+
+  border-top: 1px solid #edf0f2;
+
+  color: #657087;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  text-align: left;
+}
+
+
+/* Table Data */
+
+.clock-page .activity-card td {
+  padding: 13px 17px;
+
+  border-top: 1px solid #edf0f2;
+
+  color: #172033;
+
+  font-size: 13px;
+}
+
+
+/* Table Row Hover */
+
+.clock-page .activity-card tbody tr:hover {
+  background: #fafbfc;
+}
+
+
+/* =========================================
+   ACTIVITY TYPE BADGES
+========================================= */
+
+.clock-page .activity-in,
+.clock-page .activity-out {
+  display: inline-block;
+
+  padding: 4px 10px;
+
+  border-radius: 5px;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+
+/* CLOCK IN BADGE */
+
+.clock-page .activity-in {
+  background: #d9f9e5;
+
+  color: #00883e;
+}
+
+
+/* CLOCK OUT BADGE */
+
+.clock-page .activity-out {
+  background: #ffe0e0;
+
+  color: #ef4444;
+}
+
+
+/* =========================================
+   ACTIVITY FOOTER
+========================================= */
+
+.clock-page .activity-footer {
+  padding: 13px 17px;
+
+  border-top: 1px solid #edf0f2;
+
+  color: #9298aa;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 768px) {
+
+  .clock-page .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+
+    gap: 5px;
+  }
+
+  .clock-page .clock-card {
+    min-height: 420px;
+
+    padding: 25px 15px;
+  }
+
+  .clock-page .station-container {
+    width: 100%;
+
+    max-width: 310px;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 500px) {
+
+  .clock-page .page-header h1 {
+    font-size: 21px;
+  }
+
+  .clock-page .page-header p {
+    font-size: 12px;
+  }
+
+  .clock-page .current-time {
+    font-size: 31px;
+  }
+
+  .clock-page .status-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .clock-page .employee-avatar {
+    width: 55px;
+    height: 55px;
+
+    font-size: 18px;
+  }
+
+  .clock-page .activity-card table {
+    min-width: 500px;
+  }
+}

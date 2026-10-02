@@ -1,0 +1,522 @@
+/* =========================================
+   ROSTER PAGE
+========================================= */
+
+.roster-page {
+  width: 100%;
+  min-height: 100%;
+  color: #172033;
+}
+
+
+/* =========================================
+   PAGE HEADER
+========================================= */
+
+.roster-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 25px;
+}
+
+.roster-page-header h1 {
+  margin: 0;
+
+  font-size: 26px;
+  font-weight: 700;
+
+  color: #172033;
+}
+
+
+/* ADD SHIFT BUTTON */
+
+.add-shift-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  height: 38px;
+
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 4px;
+
+  background: #286b45;
+  color: white;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.add-shift-btn:hover {
+  background: #205b3a;
+}
+
+
+/* =========================================
+   CALENDAR CARD
+========================================= */
+
+.roster-calendar-card {
+  width: 100%;
+
+  background: white;
+
+  border: 1px solid #e2e5e9;
+  border-radius: 9px;
+
+  overflow: hidden;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =========================================
+   CALENDAR TOOLBAR
+========================================= */
+
+.calendar-toolbar {
+  min-height: 64px;
+
+  padding: 0 22px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  border-bottom: 1px solid #edf0f2;
+}
+
+.calendar-navigation {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+}
+
+.calendar-navigation h2 {
+  margin: 0 0 0 5px;
+
+  font-size: 17px;
+  font-weight: 600;
+
+  color: #26344d;
+}
+
+
+/* ARROW BUTTONS */
+
+.calendar-arrow-btn {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: white;
+
+  border: 1px solid #dce1e6;
+  border-radius: 4px;
+
+  color: #344054;
+
+  cursor: pointer;
+}
+
+.calendar-arrow-btn:hover {
+  background: #f7f8fa;
+}
+
+
+/* TODAY BUTTON */
+
+.today-btn {
+  height: 34px;
+
+  padding: 0 15px;
+
+  background: white;
+
+  border: 1px solid #dce1e6;
+  border-radius: 4px;
+
+  color: #475467;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.today-btn:hover {
+  background: #f7f8fa;
+}
+
+
+/* =========================================
+   WEEKDAY HEADER
+========================================= */
+
+.calendar-weekdays {
+  display: grid;
+
+  grid-template-columns: repeat(7, 1fr);
+
+  height: 38px;
+
+  border-bottom: 1px solid #edf0f2;
+}
+
+.weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #596579;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+
+/* =========================================
+   CALENDAR GRID
+========================================= */
+
+.calendar-grid {
+  display: grid;
+
+  grid-template-columns: repeat(7, 1fr);
+
+  grid-template-rows: repeat(6, 86px);
+}
+
+
+/* CALENDAR CELL */
+
+.calendar-cell {
+  position: relative;
+
+  min-width: 0;
+
+  padding: 10px 8px;
+
+  background: white;
+
+  border-right: 1px solid #edf0f2;
+  border-bottom: 1px solid #edf0f2;
+}
+
+
+/* REMOVE RIGHT BORDER EVERY 7 CELLS */
+
+.calendar-cell:nth-child(7n) {
+  border-right: none;
+}
+
+
+/* LAST ROW */
+
+.calendar-cell:nth-last-child(-n + 7) {
+  border-bottom: none;
+}
+
+
+/* DATE NUMBER */
+
+.calendar-date {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #27364e;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+
+/* OUTSIDE MONTH */
+
+.calendar-cell.outside-month {
+  background: #fcfcfd;
+}
+
+.calendar-cell.outside-month .calendar-date {
+  color: #c5cad3;
+}
+
+
+/* =========================================
+   CALENDAR EVENTS
+========================================= */
+
+.calendar-events {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.calendar-event {
+  width: 100%;
+
+  padding: 3px 6px;
+
+  border-radius: 3px;
+
+  overflow: hidden;
+
+  color: white;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
+/* IRRIGATION */
+
+.calendar-event.irrigation {
+  background: #3b82f6;
+}
+
+
+/* FERTILIZER */
+
+.calendar-event.fertilizer {
+  background: #f59e0b;
+}
+
+
+/* HARVEST */
+
+.calendar-event.harvesting {
+  background: #287347;
+}
+
+
+/* =========================================
+   ADD SHIFT MODAL
+========================================= */
+
+.roster-modal-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.35);
+
+  padding: 20px;
+}
+
+
+/* MODAL */
+
+.roster-modal {
+  width: 100%;
+  max-width: 430px;
+
+  background: white;
+
+  border-radius: 10px;
+
+  padding: 22px;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+
+/* MODAL HEADER */
+
+.roster-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 22px;
+}
+
+.roster-modal-header h2 {
+  margin: 0;
+
+  font-size: 20px;
+
+  color: #172033;
+}
+
+
+/* CLOSE BUTTON */
+
+.close-modal-btn {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  background: transparent;
+
+  color: #667085;
+
+  cursor: pointer;
+}
+
+
+/* =========================================
+   FORM
+========================================= */
+
+.roster-form-group {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-bottom: 17px;
+}
+
+.roster-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #344054;
+}
+
+.roster-form-group input,
+.roster-form-group select {
+  width: 100%;
+  height: 40px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 5px;
+
+  background: white;
+
+  color: #344054;
+
+  font-size: 14px;
+
+  outline: none;
+}
+
+.roster-form-group input:focus,
+.roster-form-group select:focus {
+  border-color: #286b45;
+}
+
+
+/* =========================================
+   MODAL BUTTONS
+========================================= */
+
+.roster-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.cancel-shift-btn,
+.save-shift-btn {
+  height: 38px;
+
+  padding: 0 17px;
+
+  border-radius: 5px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+/* CANCEL */
+
+.cancel-shift-btn {
+  background: white;
+
+  border: 1px solid #d0d5dd;
+
+  color: #344054;
+}
+
+
+/* SAVE */
+
+.save-shift-btn {
+  border: none;
+
+  background: #286b45;
+
+  color: white;
+}
+
+.save-shift-btn:hover {
+  background: #205b3a;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .calendar-grid {
+    min-width: 800px;
+  }
+
+  .calendar-weekdays {
+    min-width: 800px;
+  }
+
+  .roster-calendar-card {
+    overflow-x: auto;
+  }
+}
+
+
+@media (max-width: 600px) {
+
+  .roster-page-header h1 {
+    font-size: 22px;
+  }
+
+  .add-shift-btn {
+    padding: 0 12px;
+  }
+
+  .calendar-toolbar {
+    padding: 0 12px;
+  }
+}

@@ -1,0 +1,772 @@
+/* =========================================
+   DASHBOARD - FARM TIME
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #f7f8f9;
+  color: #1f2937;
+}
+
+
+/* =========================================
+   MAIN DASHBOARD LAYOUT
+========================================= */
+
+.dashboard-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f7f8f9;
+}
+
+
+/* =========================================
+   SIDEBAR
+========================================= */
+
+.dashboard-sidebar {
+  width: 220px;
+  height: 100vh;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  background-color: #153f32;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 20px 10px;
+
+  z-index: 100;
+}
+
+
+/* =========================================
+   LOGO
+========================================= */
+
+.dashboard-logo {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 5px 8px 20px 8px;
+}
+
+.dashboard-logo-icon {
+  width: 38px;
+  height: 38px;
+
+  min-width: 38px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border: 2px solid #36d98b;
+
+  border-radius: 50%;
+
+  color: #36d98b;
+}
+
+.dashboard-logo h2 {
+  margin: 0;
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dashboard-logo p {
+  margin: 2px 0 0 0;
+
+  color: #4bdd9a;
+
+  font-size: 10px;
+}
+
+
+/* =========================================
+   SIDEBAR NAVIGATION
+========================================= */
+
+.dashboard-nav {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  width: 100%;
+}
+
+.dashboard-nav-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 11px 13px;
+
+  border: none;
+  border-radius: 5px;
+
+  background-color: transparent;
+
+  color: #b3e6d0;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.dashboard-nav-item svg {
+  flex-shrink: 0;
+}
+
+.dashboard-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+
+  color: #ffffff;
+}
+
+.dashboard-nav-item.active {
+  background-color: #506e64;
+
+  color: #ffffff;
+}
+
+
+/* =========================================
+   MAIN CONTENT
+========================================= */
+
+.dashboard-main-content {
+  width: calc(100% - 220px);
+
+  min-height: 100vh;
+
+  margin-left: 220px;
+
+  padding: 25px 25px 30px 25px;
+
+  background-color: #f7f8f9;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.dashboard-top-header {
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 25px;
+}
+
+.dashboard-top-header h1 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.dashboard-admin {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  color: #6b7280;
+
+  font-size: 13px;
+}
+
+.admin-circle {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 50%;
+
+  background-color: #e9ecef;
+
+  color: #69717c;
+}
+
+
+/* =========================================
+   TOP SUMMARY CARDS
+========================================= */
+
+.dashboard-top-cards {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.dashboard-summary-card {
+  min-height: 105px;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  padding: 18px;
+
+  background-color: #ffffff;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 7px;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+
+/* Card icon */
+
+.summary-circle {
+  width: 39px;
+  height: 39px;
+
+  min-width: 39px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 50%;
+
+  background-color: #effaf4;
+
+  color: #257b59;
+}
+
+
+/* Card information */
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.summary-info p {
+  margin: 0;
+
+  color: #737b86;
+
+  font-size: 12px;
+}
+
+.summary-info h2 {
+  margin: 3px 0;
+
+  color: #1f2937;
+
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.summary-info button {
+  margin: 0;
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: #28795b;
+
+  font-family: inherit;
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.summary-info button:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   MIDDLE GRID
+========================================= */
+
+.dashboard-middle {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+
+/* =========================================
+   GENERAL PANEL
+========================================= */
+
+.dashboard-panel {
+  background-color: #ffffff;
+
+  border: 1px solid #e5e7eb;
+
+  border-radius: 7px;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.dashboard-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-panel-heading h3 {
+  margin: 0;
+
+  color: #374151;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dashboard-panel-heading button {
+  margin: 0;
+  padding: 0;
+
+  border: none;
+
+  background-color: transparent;
+
+  color: #28795b;
+
+  font-family: inherit;
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.dashboard-panel-heading button:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================
+   CLOCKED IN PANEL
+========================================= */
+
+.clocked-panel {
+  min-height: 215px;
+
+  padding: 18px;
+}
+
+.clocked-content {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  margin-top: 30px;
+}
+
+.clocked-icon {
+  width: 50px;
+  height: 50px;
+
+  min-width: 50px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 50%;
+
+  background-color: #eaf9ef;
+
+  color: #257b59;
+}
+
+.clocked-content h2 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 27px;
+  font-weight: 600;
+}
+
+.clocked-content p {
+  margin: 2px 0;
+
+  color: #737b86;
+
+  font-size: 12px;
+}
+
+.clocked-content span {
+  color: #9ca3af;
+
+  font-size: 11px;
+}
+
+
+/* =========================================
+   UPCOMING SCHEDULES
+========================================= */
+
+.schedules-panel {
+  min-height: 215px;
+
+  overflow: hidden;
+}
+
+.schedules-heading {
+  padding: 18px 16px 13px 16px;
+}
+
+
+/* Schedule row */
+
+.dashboard-schedule-row {
+  min-height: 57px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  padding: 8px 16px;
+
+  border-top: 1px solid #eeeeee;
+}
+
+.schedule-circle {
+  width: 31px;
+  height: 31px;
+
+  min-width: 31px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 50%;
+
+  background-color: #effaf4;
+
+  color: #27805e;
+}
+
+.dashboard-schedule-row h4 {
+  margin: 0 0 3px 0;
+
+  color: #4b5563;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.dashboard-schedule-row p {
+  margin: 0;
+
+  color: #9ca3af;
+
+  font-size: 10px;
+}
+
+
+/* =========================================
+   RECENT CLOCK EVENTS
+========================================= */
+
+.recent-events {
+  width: 100%;
+
+  overflow: hidden;
+}
+
+.recent-heading {
+  padding: 16px;
+}
+
+
+/* =========================================
+   TABLE
+========================================= */
+
+.dashboard-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+
+  border-collapse: collapse;
+
+  background-color: #ffffff;
+}
+
+
+/* Table header */
+
+.dashboard-table thead {
+  background-color: #fafafa;
+}
+
+.dashboard-table th {
+  padding: 11px 16px;
+
+  color: #737b86;
+
+  font-size: 10px;
+  font-weight: 500;
+
+  text-align: left;
+}
+
+
+/* Table body */
+
+.dashboard-table td {
+  padding: 11px 16px;
+
+  border-top: 1px solid #eeeeee;
+
+  color: #4b5563;
+
+  font-size: 11px;
+}
+
+.dashboard-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+
+/* =========================================
+   CLOCK STATUS
+========================================= */
+
+.clock-status {
+  display: inline-block;
+
+  padding: 3px 7px;
+
+  border-radius: 4px;
+
+  font-size: 10px;
+  font-weight: 400;
+}
+
+
+/* Clock In */
+
+.clock-in {
+  background-color: #dff7e9;
+
+  color: #16834d;
+}
+
+
+/* Clock Out */
+
+.clock-out {
+  background-color: #fde3e3;
+
+  color: #dc5555;
+}
+
+
+/* Time */
+
+.clock-time {
+  font-family: monospace;
+
+  font-size: 10px;
+}
+
+
+/* =========================================
+   LARGE SCREEN
+========================================= */
+
+@media (min-width: 1500px) {
+
+  .dashboard-main-content {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .dashboard-summary-card {
+    min-height: 110px;
+  }
+
+  .clocked-panel,
+  .schedules-panel {
+    min-height: 220px;
+  }
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 900px) {
+
+  .dashboard-sidebar {
+    width: 180px;
+  }
+
+  .dashboard-main-content {
+    width: calc(100% - 180px);
+
+    margin-left: 180px;
+  }
+
+  .dashboard-top-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-middle {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 650px) {
+
+  .dashboard-sidebar {
+    width: 65px;
+
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+
+  /* Hide logo text */
+
+  .dashboard-logo > div:not(.dashboard-logo-icon) {
+    display: none;
+  }
+
+  .dashboard-logo {
+    justify-content: center;
+
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+
+  /* Hide navigation text */
+
+  .dashboard-nav-item span {
+    display: none;
+  }
+
+  .dashboard-nav-item {
+    justify-content: center;
+
+    padding: 12px 5px;
+  }
+
+
+  /* Main */
+
+  .dashboard-main-content {
+    width: calc(100% - 65px);
+
+    margin-left: 65px;
+
+    padding: 15px 10px;
+  }
+
+
+  /* Header */
+
+  .dashboard-top-header {
+    margin-bottom: 18px;
+  }
+
+  .dashboard-top-header h1 {
+    font-size: 20px;
+  }
+
+  .dashboard-admin span {
+    display: none;
+  }
+
+
+  /* Cards */
+
+  .dashboard-top-cards {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+
+  /* Middle */
+
+  .dashboard-middle {
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+  }
+
+
+  /* Table */
+
+  .dashboard-table {
+    min-width: 600px;
+  }
+}

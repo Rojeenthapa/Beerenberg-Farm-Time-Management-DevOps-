@@ -1,0 +1,593 @@
+/* =========================================
+   SETTINGS PAGE
+========================================= */
+
+.settings-page {
+  width: 100%;
+  min-height: 100%;
+  color: #172033;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.settings-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: #172033;
+}
+
+.settings-admin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #344054;
+  font-size: 14px;
+}
+
+.settings-admin-icon {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e9edf1;
+  color: #778090;
+}
+
+
+/* =========================================
+   GENERAL CARD
+========================================= */
+
+.settings-card {
+  width: 100%;
+  margin-bottom: 22px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e5e9;
+  border-radius: 9px;
+
+  overflow: hidden;
+
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.settings-card-header {
+  padding: 17px 20px;
+
+  border-bottom: 1px solid #edf0f2;
+}
+
+.settings-card-header h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings-card-content {
+  padding: 20px;
+}
+
+
+/* =========================================
+   ACCOUNT
+========================================= */
+
+.account-content {
+  min-height: 92px;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.account-profile {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+
+  min-width: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #287347;
+  color: white;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.account-information h3 {
+  margin: 0 0 3px;
+
+  color: #172033;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.account-information p {
+  margin: 0 0 3px;
+
+  color: #667085;
+
+  font-size: 12px;
+}
+
+.account-information span {
+  color: #9299aa;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   GREEN BUTTON
+========================================= */
+
+.settings-green-btn {
+  min-height: 36px;
+
+  padding: 0 16px;
+
+  border: none;
+  border-radius: 5px;
+
+  background: #286b45;
+  color: white;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.settings-green-btn:hover {
+  background: #205b3a;
+}
+
+
+/* =========================================
+   FARM DETAILS
+========================================= */
+
+.farm-details-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  column-gap: 16px;
+  row-gap: 15px;
+}
+
+
+/* =========================================
+   FORM GROUP
+========================================= */
+
+.settings-form-group {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.settings-form-group label {
+  color: #536174;
+
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.settings-form-group input,
+.settings-form-group select {
+  width: 100%;
+  height: 40px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+
+  outline: none;
+
+  background: white;
+
+  color: #25324a;
+
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.settings-form-group input:focus,
+.settings-form-group select:focus {
+  border-color: #286b45;
+
+  box-shadow: 0 0 0 2px rgba(40, 107, 69, 0.08);
+}
+
+
+/* =========================================
+   SAVE ROW
+========================================= */
+
+.settings-save-row {
+  display: flex;
+  justify-content: flex-end;
+
+  margin-top: 15px;
+}
+
+
+/* =========================================
+   COMPLIANCE
+========================================= */
+
+.compliance-grid {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 16px;
+}
+
+
+/* =========================================
+   USERS TABLE
+========================================= */
+
+.users-access-card {
+  margin-bottom: 30px;
+}
+
+.settings-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.settings-users-table {
+  width: 100%;
+
+  min-width: 800px;
+
+  border-collapse: collapse;
+}
+
+.settings-users-table thead {
+  background: #f8f9fa;
+}
+
+.settings-users-table th {
+  padding: 13px 16px;
+
+  text-align: left;
+
+  color: #657087;
+
+  font-size: 12px;
+  font-weight: 500;
+
+  white-space: nowrap;
+}
+
+.settings-users-table td {
+  padding: 14px 16px;
+
+  border-top: 1px solid #edf0f2;
+
+  color: #344054;
+
+  font-size: 13px;
+}
+
+.settings-user-name {
+  color: #172033 !important;
+
+  font-weight: 500;
+}
+
+.settings-user-email {
+  color: #667085 !important;
+
+  font-size: 12px !important;
+}
+
+
+/* =========================================
+   ROLE BADGES
+========================================= */
+
+.settings-role-badge {
+  display: inline-block;
+
+  padding: 3px 10px;
+
+  border-radius: 5px;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-role {
+  background: #f1e5ff;
+
+  color: #8b2cff;
+}
+
+.staff-role {
+  background: #dbeafe;
+
+  color: #2563eb;
+}
+
+
+/* =========================================
+   STATUS BADGES
+========================================= */
+
+.settings-status-badge {
+  display: inline-block;
+
+  padding: 3px 10px;
+
+  border-radius: 5px;
+
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.active-user {
+  background: #d9f9e5;
+
+  color: #00883e;
+}
+
+.inactive-user {
+  background: #ffe0e0;
+
+  color: #ff4d4f;
+}
+
+
+/* =========================================
+   EDIT BUTTON
+========================================= */
+
+.settings-edit-btn {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 5px;
+
+  background: transparent;
+
+  color: #98a2b3;
+
+  cursor: pointer;
+}
+
+.settings-edit-btn:hover {
+  background: #f2f4f7;
+
+  color: #286b45;
+}
+
+
+/* =========================================
+   TABLE FOOTER
+========================================= */
+
+.settings-table-footer {
+  min-height: 40px;
+
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+
+  border-top: 1px solid #edf0f2;
+
+  color: #9299aa;
+
+  font-size: 12px;
+}
+
+
+/* =========================================
+   MODAL
+========================================= */
+
+.settings-modal-overlay {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.settings-modal {
+  width: 100%;
+  max-width: 440px;
+
+  padding: 22px;
+
+  border-radius: 10px;
+
+  background: white;
+
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.settings-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 22px;
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 20px;
+}
+
+.settings-modal-close {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  background: transparent;
+
+  color: #667085;
+
+  cursor: pointer;
+}
+
+.settings-modal form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+
+/* =========================================
+   MODAL ACTIONS
+========================================= */
+
+.settings-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 7px;
+}
+
+.settings-cancel-btn {
+  min-height: 36px;
+
+  padding: 0 16px;
+
+  border: 1px solid #d0d5dd;
+  border-radius: 5px;
+
+  background: white;
+
+  color: #344054;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.settings-cancel-btn:hover {
+  background: #f7f8fa;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 800px) {
+  .farm-details-grid,
+  .compliance-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 600px) {
+  .settings-header h1 {
+    font-size: 22px;
+  }
+
+  .settings-admin span {
+    display: none;
+  }
+
+  .account-content {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 18px;
+  }
+
+  .account-content .settings-green-btn {
+    width: 100%;
+  }
+
+  .settings-save-row .settings-green-btn {
+    width: 100%;
+  }
+
+  .settings-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .settings-modal-actions button {
+    width: 100%;
+  }
+}
