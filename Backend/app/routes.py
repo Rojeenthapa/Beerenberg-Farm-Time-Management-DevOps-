@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from .extensions import db
 from .models import Employee
 
+
 main_bp = Blueprint("main", __name__)
 
 
@@ -39,7 +40,8 @@ def create_employee():
     ]
 
     missing_fields = [
-        field for field in required_fields
+        field
+        for field in required_fields
         if field not in data or data[field] in (None, "")
     ]
 
@@ -74,11 +76,6 @@ def create_employee():
     if validation_error:
         return jsonify(validation_error), 400
 
-    standard_hours = float(data["standard_hours"])
-    pay_rate = float(data["pay_rate"])
-    overtime_pay_rate = float(data["overtime_pay_rate"])
-    hire_date = date.fromisoformat(str(data["hire_date"]))
-
     existing_employee = Employee.query.filter_by(email=email).first()
 
     if existing_employee:
@@ -93,11 +90,11 @@ def create_employee():
         phone=phone,
         role=role,
         contract_type=contract_type,
-        standard_hours=standard_hours,
-        pay_rate=pay_rate,
-        overtime_pay_rate=overtime_pay_rate,
+        standard_hours=float(data["standard_hours"]),
+        pay_rate=float(data["pay_rate"]),
+        overtime_pay_rate=float(data["overtime_pay_rate"]),
         status="Active",
-        hire_date=hire_date
+        hire_date=date.fromisoformat(str(data["hire_date"]))
     )
 
     try:
@@ -159,7 +156,8 @@ def update_employee(employee_id):
     ]
 
     missing_fields = [
-        field for field in required_fields
+        field
+        for field in required_fields
         if field not in data or data[field] in (None, "")
     ]
 
@@ -228,6 +226,40 @@ def update_employee(employee_id):
         }), 409
 
     return jsonify(employee.to_dict()), 200
+
+
+@main_bp.patch("/api/employees/<int:employee_id>/deactivate")
+def deactivate_employee(employee_id):
+    employee = db.session.get(Employee, employee_id)
+
+    if employee is None:
+        return jsonify({
+            "error": "Employee not found."
+        }), 404
+
+    if employee.status == "Inactive":
+        return jsonify({
+            "error": "Employee is already inactive."
+        }), 409
+
+    employee.status = "Inactive"
+
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+
+        return jsonify({
+            "error": (
+                "The employee could not be deactivated "
+                "because of a database conflict."
+            )
+        }), 409
+
+    return jsonify({
+        "message": "Employee deactivated successfully.",
+        "employee": employee.to_dict()
+    }), 200
 
 
 def validate_employee_fields(
