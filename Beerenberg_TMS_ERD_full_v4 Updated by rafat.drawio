@@ -1,0 +1,277 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Beerenberg TMS - Full Data Model ERD" id="erd4">
+    <mxGraphModel dx="2316" dy="1047" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1450" pageHeight="1300" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="lbl_core" parent="1" style="text;fontStyle=1;fontSize=20;fontColor=#3F6B4F;align=left;" value="CORE MODEL" vertex="1">
+          <mxGeometry height="30" width="400" x="20" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_ext" parent="1" style="text;fontStyle=1;fontSize=18;fontColor=#6B4C8A;align=left;" value="EXTENDED — links up to Core Model above" vertex="1">
+          <mxGeometry height="28" width="700" x="160" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl_standalone" parent="1" style="text;fontStyle=1;fontSize=14;fontColor=#8A7A6A;align=left;" value="REFERENCE TABLE" vertex="1">
+          <mxGeometry height="24" width="500" x="1020" y="1020" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_User" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#3F6B4F;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="User" vertex="1">
+          <mxGeometry height="134" width="240" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_User_row0" parent="ent_User" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EAF3EC;strokeColor=#CCCCCC;fontSize=12;" value="user_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_User_row1" parent="ent_User" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_User_row3" parent="ent_User" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="password_hash : string" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_User_row4" parent="ent_User" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="role : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#3F6B4F;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="Employee" vertex="1">
+          <mxGeometry height="342" width="240" x="400" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row0" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EAF3EC;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row1" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="first_name : string" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row2" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="last_name : string" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row3" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="email : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row4" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="phone : string" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row5" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="role : string" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row6" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="contract_type : string" vertex="1">
+          <mxGeometry height="26" width="240" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row7" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="standard_hours : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="212" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row8" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="pay_rate : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="238" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row9" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="overtime_pay_rate : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="264" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row10" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="status : string" vertex="1">
+          <mxGeometry height="26" width="240" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Employee_row11" parent="ent_Employee" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="hire_date : date" vertex="1">
+          <mxGeometry height="26" width="240" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#3F6B4F;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="Shift" vertex="1">
+          <mxGeometry height="186" width="240" x="20" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row0" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EAF3EC;strokeColor=#CCCCCC;fontSize=12;" value="shift_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row1" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row3" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="date : date" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row4" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="start_time : time" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row5" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="end_time : time" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Shift_row6" parent="ent_Shift" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="status : string" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#3F6B4F;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="TimeLog" vertex="1">
+          <mxGeometry height="160" width="240" x="300" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog_row0" parent="ent_TimeLog" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EAF3EC;strokeColor=#CCCCCC;fontSize=12;" value="timelog_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog_row1" parent="ent_TimeLog" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog_row3" parent="ent_TimeLog" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="clock_in : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog_row4" parent="ent_TimeLog" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="clock_out : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_TimeLog_row5" parent="ent_TimeLog" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="date : date" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#3F6B4F;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="PayrollRecord" vertex="1">
+          <mxGeometry height="212" width="240" x="580" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row0" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EAF3EC;strokeColor=#CCCCCC;fontSize=12;" value="payroll_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row1" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row2" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="period_start : date" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row3" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="period_end : date" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row4" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="total_hours : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row5" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="gross_pay : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_PayrollRecord_row6" parent="ent_PayrollRecord" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="status : string" vertex="1">
+          <mxGeometry height="26" width="240" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#6B4C8A;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="Credential" vertex="1">
+          <mxGeometry height="212" width="240" x="860" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row0" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EFE8F4;strokeColor=#CCCCCC;fontSize=12;" value="credential_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row1" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row2" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="method_type : string" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row3" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="external_ref : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row4" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="status : string" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row5" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="issued_at : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Credential_row6" parent="ent_Credential" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="replaced_at : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#6B4C8A;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="Exception" vertex="1">
+          <mxGeometry height="238" width="240" x="1140" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row0" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EFE8F4;strokeColor=#CCCCCC;fontSize=12;" value="exception_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row1" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="employee_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row2" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="rule_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row3" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="type : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row4" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="severity : string" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row5" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="status : string" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row6" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="resolved_by : string" vertex="1">
+          <mxGeometry height="26" width="240" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Exception_row7" parent="ent_Exception" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="resolved_at : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="212" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#6B4C8A;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="Break" vertex="1">
+          <mxGeometry height="160" width="240" x="470" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break_row0" parent="ent_Break" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EFE8F4;strokeColor=#CCCCCC;fontSize=12;" value="break_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break_row1" parent="ent_Break" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="timelog_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break_row2" parent="ent_Break" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="start_time : time" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break_row3" parent="ent_Break" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="end_time : time" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_Break_row4" parent="ent_Break" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="reason : string" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#6B4C8A;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="AdminAdjustment" vertex="1">
+          <mxGeometry height="212" width="240" x="720" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row0" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EFE8F4;strokeColor=#CCCCCC;fontSize=12;" value="adjustment_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row1" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="timelog_id : int  [FK]" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row2" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="before_value : string" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row3" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="after_value : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row4" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="reason : string" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row5" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="adjusted_by : string" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_AdminAdjustment_row6" parent="ent_AdminAdjustment" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="timestamp : datetime" vertex="1">
+          <mxGeometry height="26" width="240" y="186" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;collapsible=0;swimlaneFillColor=#FFFFFF;fillColor=#8A7A6A;fontColor=#FFFFFF;strokeColor=#2F5140;fontSize=14;" value="ComplianceRule" vertex="1">
+          <mxGeometry height="186" width="240" x="1020" y="1050" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row0" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=1;fillColor=#EFEDE9;strokeColor=#CCCCCC;fontSize=12;" value="rule_id : int  [PK]" vertex="1">
+          <mxGeometry height="26" width="240" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row1" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="rule_code : string" vertex="1">
+          <mxGeometry height="26" width="240" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row2" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="threshold_value : decimal" vertex="1">
+          <mxGeometry height="26" width="240" y="82" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row3" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="applies_to : string" vertex="1">
+          <mxGeometry height="26" width="240" y="108" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row4" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="effective_from : date" vertex="1">
+          <mxGeometry height="26" width="240" y="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ent_ComplianceRule_row5" parent="ent_ComplianceRule" style="text;align=left;verticalAlign=middle;spacingLeft=8;fontStyle=0;fillColor=#FFFFFF;strokeColor=#CCCCCC;fontSize=12;" value="effective_to : date" vertex="1">
+          <mxGeometry height="26" width="240" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_user" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#3F6B4F;strokeColor=#3F6B4F;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="ent_User" value="has (1:1)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_shift" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#3F6B4F;strokeColor=#3F6B4F;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_Shift" value="scheduled_for (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_tlog" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#3F6B4F;strokeColor=#3F6B4F;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_TimeLog" value="clocks (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_pay" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#3F6B4F;strokeColor=#3F6B4F;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_PayrollRecord" value="generates (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_cred" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#6B4C8A;strokeColor=#6B4C8A;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.7;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_Credential" value="registers (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_exc" edge="1" parent="1" source="ent_Employee" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#6B4C8A;strokeColor=#6B4C8A;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.9;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_Exception" value="flags (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_tlog_break" edge="1" parent="1" source="ent_TimeLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#6B4C8A;strokeColor=#6B4C8A;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_Break" value="includes (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_tlog_adj" edge="1" parent="1" source="ent_TimeLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#6B4C8A;strokeColor=#6B4C8A;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.8;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_AdminAdjustment" value="amended_by (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel_exc_rule" edge="1" parent="1" source="ent_Exception" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=11;fontStyle=1;fontColor=#8A7A6A;strokeColor=#8A7A6A;strokeWidth=2;startArrow=none;endArrow=block;endFill=1;endSize=8;exitX=0.3;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="ent_ComplianceRule" value="violates (1:M)">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
