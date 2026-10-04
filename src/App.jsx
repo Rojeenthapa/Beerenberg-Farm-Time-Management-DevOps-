@@ -1,8 +1,10 @@
 import { useState } from "react";
+
 import Dashboard from "./Pages/Dashboard";
+
 import "./App.css";
 
-const API_URL = "http://127.0.0.1:5000/api";
+const API_URL = "/api";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -42,14 +44,28 @@ function App() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Accept": "application/json"
           },
           body: JSON.stringify({
-            email: email.trim(),
+            email: email.trim().toLowerCase(),
             password
           })
         }
       );
+
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/json")) {
+        const htmlResponse = await response.text();
+
+        throw new Error(
+          "The API returned HTML instead of JSON. " +
+          "Check that Flask is running on port 5000 " +
+          "and the Vite proxy is configured."
+        );
+      }
 
       const data = await response.json();
 
@@ -65,6 +81,10 @@ function App() {
         localStorage.setItem(
           "currentUser",
           JSON.stringify(data.user)
+        );
+      } else {
+        localStorage.removeItem(
+          "currentUser"
         );
       }
 

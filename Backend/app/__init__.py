@@ -8,9 +8,15 @@ from .extensions import migrate
 
 
 def create_app():
-    app = Flask(__name__, instance_relative_config=True)
+    app = Flask(
+        __name__,
+        instance_relative_config=True
+    )
 
-    os.makedirs(app.instance_path, exist_ok=True)
+    os.makedirs(
+        app.instance_path,
+        exist_ok=True
+    )
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv(
@@ -33,8 +39,8 @@ def create_app():
         resources={
             r"/api/*": {
                 "origins": [
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173"
+                    "http://127.0.0.1:5173",
+                    "http://localhost:5173"
                 ]
             }
         }
@@ -46,6 +52,8 @@ def create_app():
     from . import models
     from .routes import main_bp
 
-    app.register_blueprint(main_bp)
+    app.register_blueprint(
+        main_bp
+    )
 
     return app

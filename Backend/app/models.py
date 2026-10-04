@@ -15,48 +15,59 @@ class Employee(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     first_name = db.Column(
         db.String(100),
         nullable=False
     )
+
     last_name = db.Column(
         db.String(100),
         nullable=False
     )
+
     email = db.Column(
         db.String(255),
         nullable=False,
         unique=True
     )
+
     phone = db.Column(
         db.String(30),
         nullable=True
     )
+
     role = db.Column(
         db.String(100),
         nullable=False
     )
+
     contract_type = db.Column(
         db.String(50),
         nullable=False
     )
+
     standard_hours = db.Column(
         db.Numeric(5, 2),
         nullable=False
     )
+
     pay_rate = db.Column(
         db.Numeric(10, 2),
         nullable=False
     )
+
     overtime_pay_rate = db.Column(
         db.Numeric(10, 2),
         nullable=False
     )
+
     status = db.Column(
         db.String(30),
         nullable=False,
         default="Active"
     )
+
     hire_date = db.Column(
         db.Date,
         nullable=False
@@ -67,26 +78,31 @@ class Employee(db.Model):
         back_populates="employee",
         cascade="all, delete-orphan"
     )
+
     credentials = db.relationship(
         "Credential",
         back_populates="employee",
         cascade="all, delete-orphan"
     )
+
     shifts = db.relationship(
         "Shift",
         back_populates="employee",
         cascade="all, delete-orphan"
     )
+
     time_logs = db.relationship(
         "TimeLog",
         back_populates="employee",
         cascade="all, delete-orphan"
     )
+
     payroll_records = db.relationship(
         "PayrollRecord",
         back_populates="employee",
         cascade="all, delete-orphan"
     )
+
     exceptions = db.relationship(
         "ExceptionRecord",
         back_populates="employee",
@@ -137,6 +153,7 @@ class User(UserMixin, db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -147,10 +164,12 @@ class User(UserMixin, db.Model):
         nullable=False,
         unique=True
     )
+
     password_hash = db.Column(
         db.String(255),
         nullable=False
     )
+
     role = db.Column(
         db.String(100),
         nullable=False
@@ -215,6 +234,7 @@ class Credential(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -224,24 +244,29 @@ class Credential(db.Model):
         ),
         nullable=False
     )
+
     method_type = db.Column(
         db.String(50),
         nullable=False
     )
+
     external_ref = db.Column(
         db.String(255),
         nullable=False,
         unique=True
     )
+
     status = db.Column(
         db.String(30),
         nullable=False,
         default="Active"
     )
+
     issued_at = db.Column(
         db.DateTime,
         nullable=False
     )
+
     replaced_at = db.Column(
         db.DateTime,
         nullable=True
@@ -280,23 +305,28 @@ class ComplianceRule(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     rule_code = db.Column(
         db.String(100),
         nullable=False,
         unique=True
     )
+
     threshold_value = db.Column(
         db.Numeric(10, 2),
         nullable=False
     )
+
     applies_to = db.Column(
         db.String(100),
         nullable=False
     )
+
     effective_from = db.Column(
         db.Date,
         nullable=False
     )
+
     effective_to = db.Column(
         db.Date,
         nullable=True
@@ -338,6 +368,7 @@ class Shift(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -347,18 +378,22 @@ class Shift(db.Model):
         ),
         nullable=False
     )
+
     date = db.Column(
         db.Date,
         nullable=False
     )
+
     start_time = db.Column(
         db.Time,
         nullable=False
     )
+
     end_time = db.Column(
         db.Time,
         nullable=False
     )
+
     status = db.Column(
         db.String(30),
         nullable=False,
@@ -401,6 +436,7 @@ class TimeLog(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -410,14 +446,17 @@ class TimeLog(db.Model):
         ),
         nullable=False
     )
+
     clock_in = db.Column(
         db.DateTime,
         nullable=False
     )
+
     clock_out = db.Column(
         db.DateTime,
         nullable=True
     )
+
     date = db.Column(
         db.Date,
         nullable=False
@@ -427,11 +466,13 @@ class TimeLog(db.Model):
         "Employee",
         back_populates="time_logs"
     )
+
     breaks = db.relationship(
         "BreakRecord",
         back_populates="time_log",
         cascade="all, delete-orphan"
     )
+
     adjustments = db.relationship(
         "AdminAdjustment",
         back_populates="time_log",
@@ -468,6 +509,7 @@ class BreakRecord(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     timelog_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -477,14 +519,17 @@ class BreakRecord(db.Model):
         ),
         nullable=False
     )
+
     start_time = db.Column(
         db.Time,
         nullable=False
     )
+
     end_time = db.Column(
         db.Time,
         nullable=True
     )
+
     reason = db.Column(
         db.String(255),
         nullable=True
@@ -521,6 +566,7 @@ class PayrollRecord(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -530,22 +576,27 @@ class PayrollRecord(db.Model):
         ),
         nullable=False
     )
+
     period_start = db.Column(
         db.Date,
         nullable=False
     )
+
     period_end = db.Column(
         db.Date,
         nullable=False
     )
+
     total_hours = db.Column(
         db.Numeric(8, 2),
         nullable=False
     )
+
     gross_pay = db.Column(
         db.Numeric(12, 2),
         nullable=False
     )
+
     status = db.Column(
         db.String(30),
         nullable=False,
@@ -593,6 +644,7 @@ class ExceptionRecord(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     employee_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -602,6 +654,7 @@ class ExceptionRecord(db.Model):
         ),
         nullable=False
     )
+
     rule_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -611,23 +664,28 @@ class ExceptionRecord(db.Model):
         ),
         nullable=False
     )
+
     type = db.Column(
         db.String(100),
         nullable=False
     )
+
     severity = db.Column(
         db.String(30),
         nullable=False
     )
+
     status = db.Column(
         db.String(30),
         nullable=False,
         default="Open"
     )
+
     resolved_by = db.Column(
         db.String(255),
         nullable=True
     )
+
     resolved_at = db.Column(
         db.DateTime,
         nullable=True
@@ -637,6 +695,7 @@ class ExceptionRecord(db.Model):
         "Employee",
         back_populates="exceptions"
     )
+
     rule = db.relationship(
         "ComplianceRule",
         back_populates="exceptions"
@@ -667,6 +726,7 @@ class AdminAdjustment(db.Model):
         primary_key=True,
         autoincrement=True
     )
+
     timelog_id = db.Column(
         db.Integer,
         db.ForeignKey(
@@ -676,22 +736,27 @@ class AdminAdjustment(db.Model):
         ),
         nullable=False
     )
+
     before_value = db.Column(
         db.String(255),
         nullable=False
     )
+
     after_value = db.Column(
         db.String(255),
         nullable=False
     )
+
     reason = db.Column(
         db.String(500),
         nullable=False
     )
+
     adjusted_by = db.Column(
         db.String(255),
         nullable=False
     )
+
     timestamp = db.Column(
         db.DateTime,
         nullable=False,
