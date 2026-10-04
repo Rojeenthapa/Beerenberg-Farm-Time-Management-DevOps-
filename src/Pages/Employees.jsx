@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+
 import {
   Pencil,
   Plus,
@@ -7,9 +12,12 @@ import {
   X
 } from "lucide-react";
 
-import "../styles/Employees.css";
+import {
+  apiRequest,
+  getStoredUser
+} from "../api";
 
-const API_URL = "http://127.0.0.1:5000/api";
+import "../styles/Employees.css";
 
 const EMPTY_EMPLOYEE = {
   first_name: "",
@@ -26,36 +34,58 @@ const EMPTY_EMPLOYEE = {
 };
 
 function Employees() {
-  const [employees, setEmployees] = useState([]);
-  const [search, setSearch] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const currentUser = getStoredUser();
+
+  const isAdmin = Boolean(
+    currentUser?.is_admin
+  );
+
+  const [employees, setEmployees] =
+    useState([]);
+
+  const [search, setSearch] =
+    useState("");
+
+  const [showModal, setShowModal] =
+    useState(false);
+
   const [editingEmployeeId, setEditingEmployeeId] =
     useState(null);
-  const [form, setForm] = useState(EMPTY_EMPLOYEE);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+
+  const [form, setForm] =
+    useState(EMPTY_EMPLOYEE);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [deletingId, setDeletingId] =
+    useState(null);
+
+  const [error, setError] =
+    useState("");
 
   const loadEmployees = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(
-        `${API_URL}/employees`
+      const data = await apiRequest(
+        "/employees"
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to load employees."
-        );
-      }
-
       setEmployees(data);
+
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
     } finally {
       setLoading(false);
     }
@@ -66,7 +96,9 @@ function Employees() {
   }, []);
 
   const filteredEmployees = useMemo(() => {
-    const searchText = search.trim().toLowerCase();
+    const searchText = search
+      .trim()
+      .toLowerCase();
 
     if (!searchText) {
       return employees;
@@ -79,6 +111,7 @@ function Employees() {
       ].join(" ");
 
       return [
+        employee.display_id,
         employee.employee_id,
         fullName,
         employee.email,
@@ -90,7 +123,10 @@ function Employees() {
         .toLowerCase()
         .includes(searchText);
     });
-  }, [employees, search]);
+  }, [
+    employees,
+    search
+  ]);
 
   const handleInputChange = (event) => {
     const {
@@ -129,14 +165,19 @@ function Employees() {
       email: employee.email || "",
       phone: employee.phone || "",
       role: employee.role || "",
-      contract_type: employee.contract_type ||
+      contract_type:
+        employee.contract_type ||
         "Full Time",
-      standard_hours: employee.standard_hours ?? "",
-      pay_rate: employee.pay_rate ?? "",
+      standard_hours:
+        employee.standard_hours ?? "",
+      pay_rate:
+        employee.pay_rate ?? "",
       overtime_pay_rate:
         employee.overtime_pay_rate ?? "",
-      status: employee.status || "Active",
-      hire_date: employee.hire_date || ""
+      status:
+        employee.status || "Active",
+      hire_date:
+        employee.hire_date || ""
     });
 
     setError("");
@@ -156,19 +197,16 @@ function Employees() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     setSaving(true);
     setError("");
 
     const isEditing =
       editingEmployeeId !== null;
 
-    const url = isEditing
-      ? `${API_URL}/employees/${editingEmployeeId}`
-      : `${API_URL}/employees`;
-
-    const method = isEditing
-      ? "PUT"
-      : "POST";
+    const endpoint = isEditing
+      ? `/employees/${editingEmployeeId}`
+      : "/employees";
 
     const payload = {
       first_name: form.first_name.trim(),
@@ -177,8 +215,12 @@ function Employees() {
       phone: form.phone.trim() || null,
       role: form.role.trim(),
       contract_type: form.contract_type,
-      standard_hours: Number(form.standard_hours),
-      pay_rate: Number(form.pay_rate),
+      standard_hours: Number(
+        form.standard_hours
+      ),
+      pay_rate: Number(
+        form.pay_rate
+      ),
       overtime_pay_rate: Number(
         form.overtime_pay_rate
       ),
@@ -187,30 +229,23 @@ function Employees() {
     };
 
     try {
-      const response = await fetch(
-        url,
+      await apiRequest(
+        endpoint,
         {
-          method,
-          headers: {
-            "Content-Type": "application/json"
-          },
+          method: isEditing
+            ? "PUT"
+            : "POST",
           body: JSON.stringify(payload)
         }
       );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to save employee."
-        );
-      }
 
       closeModal();
       await loadEmployees();
 
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
     } finally {
       setSaving(false);
     }
@@ -225,59 +260,80 @@ function Employees() {
       return;
     }
 
+    setDeletingId(employeeId);
     setError("");
 
     try {
-      const response = await fetch(
-        `${API_URL}/employees/${employeeId}`,
+      await apiRequest(
+        `/employees/${employeeId}`,
         {
           method: "DELETE"
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Unable to delete employee."
-        );
-      }
-
       await loadEmployees();
 
     } catch (requestError) {
-      setError(requestError.message);
+      setError(
+        requestError.message
+      );
+    } finally {
+      setDeletingId(null);
     }
   };
 
-  const getContractClass = (contractType) => {
+  const contractClassName = (
+    contractType
+  ) => {
     return contractType
       .toLowerCase()
       .replace(/\s+/g, "-");
   };
 
-  const getStatusClass = (status) => {
-    return status.toLowerCase();
+  const statusClassName = (
+    status
+  ) => {
+    return status
+      .toLowerCase()
+      .replace(/\s+/g, "-");
   };
+
+  if (!isAdmin) {
+    return (
+      <section className="dashboard-content">
+        <h1>
+          Access Restricted
+        </h1>
+
+        <p className="page-description">
+          Only administrators can access
+          employee management.
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section className="employees-page">
       <div className="employees-header">
-        <div>
-          <h1>Employees</h1>
-        </div>
+        <h1>
+          Employees
+        </h1>
 
         <button
           type="button"
           className="add-employee-btn"
           onClick={openAddModal}
         >
-          <Plus size={16} />
-          Add Employee
+          <Plus size={17} />
+
+          <span>
+            Add Employee
+          </span>
         </button>
       </div>
 
-      <div className="employees-card">
+      <section className="employees-card">
         <div className="employees-search-section">
           <div className="employees-search-box">
             <Search size={16} />
@@ -287,7 +343,9 @@ function Employees() {
               placeholder="Search employees..."
               value={search}
               onChange={(event) => {
-                setSearch(event.target.value);
+                setSearch(
+                  event.target.value
+                );
               }}
             />
           </div>
@@ -303,13 +361,37 @@ function Employees() {
           <table className="employees-table">
             <thead>
               <tr>
-                <th>Employee ID</th>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Contract Type</th>
-                <th>Pay Rate</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th>
+                  Employee ID
+                </th>
+
+                <th>
+                  Name
+                </th>
+
+                <th>
+                  Email
+                </th>
+
+                <th>
+                  Role
+                </th>
+
+                <th>
+                  Contract Type
+                </th>
+
+                <th>
+                  Pay Rate
+                </th>
+
+                <th>
+                  Status
+                </th>
+
+                <th>
+                  Action
+                </th>
               </tr>
             </thead>
 
@@ -317,7 +399,7 @@ function Employees() {
               {loading && (
                 <tr>
                   <td
-                    colSpan="7"
+                    colSpan="8"
                     className="no-employees"
                   >
                     Loading employees...
@@ -326,94 +408,108 @@ function Employees() {
               )}
 
               {!loading &&
-                filteredEmployees.map((employee) => (
-                  <tr
-                    key={employee.employee_id}
-                  >
-                    <td className="employee-id">
-                      {employee.employee_id}
-                    </td>
+                filteredEmployees.map(
+                  (employee) => (
+                    <tr
+                      key={
+                        employee.employee_id
+                      }
+                    >
+                      <td className="employee-id">
+                        {employee.display_id}
+                      </td>
 
-                    <td className="employee-name">
-                      {employee.first_name}{" "}
-                      {employee.last_name}
-                    </td>
+                      <td className="employee-name">
+                        {employee.first_name}{" "}
+                        {employee.last_name}
+                      </td>
 
-                    <td>
-                      {employee.role}
-                    </td>
+                      <td>
+                        {employee.email}
+                      </td>
 
-                    <td>
-                      <span
-                        className={
-                          `contract-badge ` +
-                          getContractClass(
-                            employee.contract_type
-                          )
-                        }
-                      >
-                        {employee.contract_type}
-                      </span>
-                    </td>
+                      <td>
+                        {employee.role}
+                      </td>
 
-                    <td>
-                      $
-                      {Number(
-                        employee.pay_rate || 0
-                      ).toFixed(2)}
-                      /hr
-                    </td>
-
-                    <td>
-                      <span
-                        className={
-                          `employee-status ` +
-                          getStatusClass(
-                            employee.status
-                          )
-                        }
-                      >
-                        {employee.status}
-                      </span>
-                    </td>
-
-                    <td>
-                      <div className="employee-actions">
-                        <button
-                          type="button"
-                          className="employee-action-btn"
-                          title="Edit employee"
-                          onClick={() => {
-                            openEditModal(employee);
-                          }}
-                        >
-                          <Pencil size={15} />
-                        </button>
-
-                        <button
-                          type="button"
+                      <td>
+                        <span
                           className={
-                            "employee-action-btn delete"
+                            "contract-badge " +
+                            contractClassName(
+                              employee.contract_type
+                            )
                           }
-                          title="Delete employee"
-                          onClick={() => {
-                            handleDelete(
-                              employee.employee_id
-                            );
-                          }}
                         >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {employee.contract_type}
+                        </span>
+                      </td>
+
+                      <td>
+                        $
+                        {Number(
+                          employee.pay_rate || 0
+                        ).toFixed(2)}
+                        /hr
+                      </td>
+
+                      <td>
+                        <span
+                          className={
+                            "employee-status " +
+                            statusClassName(
+                              employee.status
+                            )
+                          }
+                        >
+                          {employee.status}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="employee-actions">
+                          <button
+                            type="button"
+                            className="employee-action-btn"
+                            title="Edit employee"
+                            onClick={() => {
+                              openEditModal(
+                                employee
+                              );
+                            }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={
+                              "employee-action-btn delete"
+                            }
+                            title="Delete employee"
+                            disabled={
+                              deletingId ===
+                              employee.employee_id
+                            }
+                            onClick={() => {
+                              handleDelete(
+                                employee.employee_id
+                              );
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )}
 
               {!loading &&
                 filteredEmployees.length === 0 && (
                   <tr>
                     <td
-                      colSpan="7"
+                      colSpan="8"
                       className="no-employees"
                     >
                       No employees found
@@ -425,19 +521,19 @@ function Employees() {
         </div>
 
         <div className="employees-footer">
-          {filteredEmployees.length} employee
-          {filteredEmployees.length === 1
-            ? ""
-            : "s"}
+          Showing{" "}
+          {filteredEmployees.length} of{" "}
+          {employees.length} employees
         </div>
-      </div>
+      </section>
 
       {showModal && (
         <div
           className="employee-modal-overlay"
           onMouseDown={(event) => {
             if (
-              event.target === event.currentTarget
+              event.target ===
+              event.currentTarget
             ) {
               closeModal();
             }
@@ -462,13 +558,13 @@ function Employees() {
                 onClick={closeModal}
                 disabled={saving}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
             <form
-              onSubmit={handleSubmit}
               className="employee-form"
+              onSubmit={handleSubmit}
             >
               <div className="employee-form-grid">
                 <div className="employee-form-group">
@@ -479,6 +575,8 @@ function Employees() {
                   <input
                     id="first_name"
                     name="first_name"
+                    type="text"
+                    placeholder="Enter first name"
                     value={form.first_name}
                     onChange={handleInputChange}
                     required
@@ -493,6 +591,8 @@ function Employees() {
                   <input
                     id="last_name"
                     name="last_name"
+                    type="text"
+                    placeholder="Enter last name"
                     value={form.last_name}
                     onChange={handleInputChange}
                     required
@@ -509,6 +609,7 @@ function Employees() {
                   id="email"
                   name="email"
                   type="email"
+                  placeholder="employee@example.com"
                   value={form.email}
                   onChange={handleInputChange}
                   required
@@ -523,9 +624,10 @@ function Employees() {
                 <input
                   id="phone"
                   name="phone"
+                  type="text"
+                  placeholder="Optional"
                   value={form.phone}
                   onChange={handleInputChange}
-                  placeholder="Optional"
                 />
               </div>
 
@@ -537,9 +639,10 @@ function Employees() {
                 <input
                   id="role"
                   name="role"
+                  type="text"
+                  placeholder="Enter employee role"
                   value={form.role}
                   onChange={handleInputChange}
-                  placeholder="e.g. Field Supervisor"
                   required
                 />
               </div>
@@ -603,9 +706,9 @@ function Employees() {
                     type="number"
                     min="0"
                     step="0.01"
+                    placeholder="28.00"
                     value={form.pay_rate}
                     onChange={handleInputChange}
-                    placeholder="0.00"
                     required
                   />
                 </div>
@@ -622,9 +725,11 @@ function Employees() {
                   type="number"
                   min="0"
                   step="0.01"
-                  value={form.overtime_pay_rate}
+                  placeholder="42.00"
+                  value={
+                    form.overtime_pay_rate
+                  }
                   onChange={handleInputChange}
-                  placeholder="0.00"
                   required
                 />
               </div>
@@ -667,12 +772,6 @@ function Employees() {
                   />
                 </div>
               </div>
-
-              {error && (
-                <p className="employees-error">
-                  {error}
-                </p>
-              )}
 
               <div className="employee-modal-actions">
                 <button

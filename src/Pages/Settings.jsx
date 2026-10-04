@@ -1,182 +1,210 @@
-import { useState } from "react";
-import { UserRound, Pencil, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  Pencil,
+  UserRound,
+  X
+} from "lucide-react";
+
+import {
+  apiRequest,
+  getStoredUser
+} from "../api";
+
 import "../styles/Settings.css";
 
-function Settings() {
-  // =========================================
-  // FARM DETAILS
-  // =========================================
+const EMPTY_USER_FORM = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  password: "",
+  role: "Staff",
+  employee_role: "Farm Staff",
+  contract_type: "Full Time",
+  standard_hours: "38",
+  pay_rate: "0",
+  overtime_pay_rate: "0",
+  hire_date: ""
+};
 
-  const [farmName, setFarmName] = useState("Beerenberg Farm");
-  const [timeZone, setTimeZone] = useState("Australia/Adelaide");
-  const [address, setAddress] = useState(
-    "Mount Barker Road, Hahndorf SA 5245"
+const EMPTY_PASSWORD_FORM = {
+  current_password: "",
+  new_password: "",
+  confirm_password: ""
+};
+
+function Settings() {
+  const currentUser = getStoredUser();
+  const isAdmin = Boolean(
+    currentUser?.is_admin
   );
 
-  // =========================================
-  // COMPLIANCE RULES
-  // =========================================
-
-  const [maxBreakHours, setMaxBreakHours] = useState("4");
-  const [weeklyHours, setWeeklyHours] = useState("38");
-
-  // =========================================
-  // PASSWORD MODAL
-  // =========================================
+  const [users, setUsers] = useState([]);
+  const [showCreateUser, setShowCreateUser] =
+    useState(false);
 
   const [showPasswordModal, setShowPasswordModal] =
     useState(false);
 
-  const [passwords, setPasswords] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
+  const [userForm, setUserForm] =
+    useState(EMPTY_USER_FORM);
 
-  // =========================================
-  // USERS
-  // =========================================
+  const [passwordForm, setPasswordForm] =
+    useState(EMPTY_PASSWORD_FORM);
 
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      name: "Admin User",
-      email: "admin@beerenberg.com.au",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      email: "john.doe@beerenberg.com.au",
-      role: "Staff",
-      status: "Active",
-    },
-    {
-      id: 3,
-      name: "Mary Smith",
-      email: "mary.smith@beerenberg.com.au",
-      role: "Staff",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Robert Brown",
-      email: "r.brown@beerenberg.com.au",
-      role: "Staff",
-      status: "Active",
-    },
-    {
-      id: 5,
-      name: "Linda White",
-      email: "l.white@beerenberg.com.au",
-      role: "Staff",
-      status: "Inactive",
-    },
-    {
-      id: 6,
-      name: "David Green",
-      email: "d.green@beerenberg.com.au",
-      role: "Staff",
-      status: "Active",
-    },
-  ]);
+  const [loadingUsers, setLoadingUsers] =
+    useState(false);
 
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [savingUser, setSavingUser] =
+    useState(false);
 
-  // =========================================
-  // SAVE FARM DETAILS
-  // =========================================
+  const [changingPassword, setChangingPassword] =
+    useState(false);
 
-  const handleSaveFarm = () => {
-    console.log("Farm details saved:", {
-      farmName,
-      timeZone,
-      address,
-    });
+  const [message, setMessage] =
+    useState("");
 
-    alert("Farm details saved successfully.");
-  };
+  const [error, setError] =
+    useState("");
 
-  // =========================================
-  // SAVE COMPLIANCE RULES
-  // =========================================
-
-  const handleSaveCompliance = () => {
-    console.log("Compliance rules saved:", {
-      maxBreakHours,
-      weeklyHours,
-    });
-
-    alert("Compliance rules saved successfully.");
-  };
-
-  // =========================================
-  // CHANGE PASSWORD
-  // =========================================
-
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-
-    if (
-      !passwords.currentPassword ||
-      !passwords.newPassword ||
-      !passwords.confirmPassword
-    ) {
-      alert("Please complete all password fields.");
+  const loadUsers = async () => {
+    if (!isAdmin) {
       return;
     }
 
-    if (
-      passwords.newPassword !==
-      passwords.confirmPassword
-    ) {
-      alert("New passwords do not match.");
-      return;
+    setLoadingUsers(true);
+
+    try {
+      const data = await apiRequest(
+        "/users"
+      );
+
+      setUsers(data);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoadingUsers(false);
     }
-
-    console.log("Password changed");
-
-    alert("Password changed successfully.");
-
-    setPasswords({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-
-    setShowPasswordModal(false);
   };
 
-  // =========================================
-  // EDIT USER
-  // =========================================
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-  const handleUserUpdate = (e) => {
-    e.preventDefault();
+  const handleUserInput = (event) => {
+    const {
+      name,
+      value
+    } = event.target;
 
-    setUsers((currentUsers) =>
-      currentUsers.map((user) =>
-        user.id === selectedUser.id
-          ? selectedUser
-          : user
-      )
-    );
+    setUserForm((currentForm) => ({
+      ...currentForm,
+      [name]: value
+    }));
+  };
 
-    setSelectedUser(null);
+  const handlePasswordInput = (event) => {
+    const {
+      name,
+      value
+    } = event.target;
+
+    setPasswordForm((currentForm) => ({
+      ...currentForm,
+      [name]: value
+    }));
+  };
+
+  const handleCreateUser = async (event) => {
+    event.preventDefault();
+
+    setSavingUser(true);
+    setMessage("");
+    setError("");
+
+    try {
+      await apiRequest(
+        "/users",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            ...userForm,
+            standard_hours: Number(
+              userForm.standard_hours
+            ),
+            pay_rate: Number(
+              userForm.pay_rate
+            ),
+            overtime_pay_rate: Number(
+              userForm.overtime_pay_rate
+            )
+          })
+        }
+      );
+
+      setMessage(
+        "User created successfully."
+      );
+
+      setUserForm({
+        ...EMPTY_USER_FORM,
+        hire_date: ""
+      });
+
+      setShowCreateUser(false);
+      await loadUsers();
+
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setSavingUser(false);
+    }
+  };
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+
+    setChangingPassword(true);
+    setMessage("");
+    setError("");
+
+    try {
+      await apiRequest(
+        "/password/change",
+        {
+          method: "POST",
+          body: JSON.stringify(
+            passwordForm
+          )
+        }
+      );
+
+      setMessage(
+        "Password changed successfully."
+      );
+
+      setPasswordForm(
+        EMPTY_PASSWORD_FORM
+      );
+
+      setShowPasswordModal(false);
+
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
-    <div className="settings-page">
-      {/* =====================================
-          HEADER
-      ===================================== */}
-
+    <section className="settings-page">
       <div className="settings-header">
         <h1>Settings</h1>
 
         <div className="settings-admin">
-          <span>Welcome, Admin</span>
+          <span>
+            {currentUser?.first_name}{" "}
+            {currentUser?.last_name}
+          </span>
 
           <div className="settings-admin-icon">
             <UserRound size={17} />
@@ -184,9 +212,17 @@ function Settings() {
         </div>
       </div>
 
-      {/* =====================================
-          ACCOUNT
-      ===================================== */}
+      {message && (
+        <div className="settings-success">
+          {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="settings-error">
+          {error}
+        </div>
+      )}
 
       <section className="settings-card">
         <div className="settings-card-header">
@@ -196,264 +232,312 @@ function Settings() {
         <div className="account-content">
           <div className="account-profile">
             <div className="account-avatar">
-              A
+              {currentUser?.first_name
+                ?.charAt(0)
+                .toUpperCase()}
             </div>
 
             <div className="account-information">
-              <h3>Admin User</h3>
+              <h3>
+                {currentUser?.first_name}{" "}
+                {currentUser?.last_name}
+              </h3>
 
-              <p>admin@beerenberg.com.au</p>
+              <p>
+                {currentUser?.email}
+              </p>
 
-              <span>Administrator</span>
+              <span>
+                {currentUser?.role}
+              </span>
             </div>
           </div>
 
           <button
             type="button"
             className="settings-green-btn"
-            onClick={() =>
-              setShowPasswordModal(true)
-            }
+            onClick={() => {
+              setMessage("");
+              setError("");
+              setShowPasswordModal(true);
+            }}
           >
             Change Password
           </button>
         </div>
       </section>
 
-      {/* =====================================
-          FARM DETAILS
-      ===================================== */}
+      {isAdmin && (
+        <section className="settings-card users-access-card">
+          <div className="settings-card-header">
+            <div>
+              <h2>Users & Access</h2>
 
-      <section className="settings-card">
-        <div className="settings-card-header">
-          <h2>Farm Details</h2>
-        </div>
-
-        <div className="settings-card-content">
-          <div className="farm-details-grid">
-            {/* FARM NAME */}
-
-            <div className="settings-form-group">
-              <label htmlFor="farmName">
-                Farm Name
-              </label>
-
-              <input
-                id="farmName"
-                type="text"
-                value={farmName}
-                onChange={(e) =>
-                  setFarmName(e.target.value)
-                }
-              />
+              <p>
+                Create staff accounts and assign
+                their initial password.
+              </p>
             </div>
 
-            {/* TIME ZONE */}
+            <button
+              type="button"
+              className="settings-green-btn"
+              onClick={() => {
+                setMessage("");
+                setError("");
 
-            <div className="settings-form-group">
-              <label htmlFor="timeZone">
-                Time Zone
-              </label>
+                setUserForm({
+                  ...EMPTY_USER_FORM,
+                  hire_date: new Date()
+                    .toISOString()
+                    .slice(0, 10)
+                });
 
-              <select
-                id="timeZone"
-                value={timeZone}
-                onChange={(e) =>
-                  setTimeZone(e.target.value)
-                }
+                setShowCreateUser(true);
+              }}
+            >
+              Create User
+            </button>
+          </div>
+
+          <div className="settings-table-wrapper">
+            {loadingUsers ? (
+              <p className="settings-loading">
+                Loading users...
+              </p>
+            ) : (
+              <table className="settings-users-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {users.map((user) => (
+                    <tr key={user.user_id}>
+                      <td className="settings-user-name">
+                        {user.first_name}{" "}
+                        {user.last_name}
+                      </td>
+
+                      <td className="settings-user-email">
+                        {user.email}
+                      </td>
+
+                      <td>
+                        <span
+                          className={
+                            user.is_admin
+                              ? "settings-role-badge admin-role"
+                              : "settings-role-badge staff-role"
+                          }
+                        >
+                          {user.role}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="settings-status-badge active-user">
+                          Active
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {users.length === 0 && (
+                    <tr>
+                      <td colSpan="4">
+                        No user accounts found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
+      )}
+
+      {showCreateUser && (
+        <div className="settings-modal-overlay">
+          <div className="settings-modal">
+            <div className="settings-modal-header">
+              <h2>Create User</h2>
+
+              <button
+                type="button"
+                className="settings-modal-close"
+                onClick={() => {
+                  setShowCreateUser(false);
+                }}
+                disabled={savingUser}
               >
-                <option value="Australia/Adelaide">
-                  Australia/Adelaide
-                </option>
-
-                <option value="Australia/Sydney">
-                  Australia/Sydney
-                </option>
-
-                <option value="Australia/Melbourne">
-                  Australia/Melbourne
-                </option>
-
-                <option value="Australia/Brisbane">
-                  Australia/Brisbane
-                </option>
-
-                <option value="Australia/Perth">
-                  Australia/Perth
-                </option>
-              </select>
+                <X size={20} />
+              </button>
             </div>
 
-            {/* ADDRESS */}
+            <form onSubmit={handleCreateUser}>
+              <div className="settings-form-group">
+                <label htmlFor="first_name">
+                  First Name
+                </label>
 
-            <div className="settings-form-group">
-              <label htmlFor="farmAddress">
-                Address
-              </label>
+                <input
+                  id="first_name"
+                  name="first_name"
+                  value={userForm.first_name}
+                  onChange={handleUserInput}
+                  required
+                />
+              </div>
 
-              <input
-                id="farmAddress"
-                type="text"
-                value={address}
-                onChange={(e) =>
-                  setAddress(e.target.value)
-                }
-              />
-            </div>
+              <div className="settings-form-group">
+                <label htmlFor="last_name">
+                  Last Name
+                </label>
+
+                <input
+                  id="last_name"
+                  name="last_name"
+                  value={userForm.last_name}
+                  onChange={handleUserInput}
+                  required
+                />
+              </div>
+
+              <div className="settings-form-group">
+                <label htmlFor="email">
+                  Email
+                </label>
+
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={userForm.email}
+                  onChange={handleUserInput}
+                  required
+                />
+              </div>
+
+              <div className="settings-form-group">
+                <label htmlFor="password">
+                  Initial Password
+                </label>
+
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  minLength="8"
+                  value={userForm.password}
+                  onChange={handleUserInput}
+                  required
+                />
+
+                <small>
+                  Minimum 8 characters.
+                </small>
+              </div>
+
+              <div className="settings-form-group">
+                <label htmlFor="role">
+                  Account Role
+                </label>
+
+                <select
+                  id="role"
+                  name="role"
+                  value={userForm.role}
+                  onChange={handleUserInput}
+                >
+                  <option value="Staff">
+                    Staff
+                  </option>
+
+                  <option value="User">
+                    User
+                  </option>
+
+                  <option value="Admin">
+                    Admin
+                  </option>
+                </select>
+              </div>
+
+              <div className="settings-form-group">
+                <label htmlFor="employee_role">
+                  Employee Role
+                </label>
+
+                <input
+                  id="employee_role"
+                  name="employee_role"
+                  value={userForm.employee_role}
+                  onChange={handleUserInput}
+                  required
+                />
+              </div>
+
+              <div className="settings-form-group">
+                <label htmlFor="contract_type">
+                  Contract Type
+                </label>
+
+                <select
+                  id="contract_type"
+                  name="contract_type"
+                  value={userForm.contract_type}
+                  onChange={handleUserInput}
+                >
+                  <option value="Full Time">
+                    Full Time
+                  </option>
+
+                  <option value="Part Time">
+                    Part Time
+                  </option>
+
+                  <option value="Casual">
+                    Casual
+                  </option>
+
+                  <option value="Seasonal">
+                    Seasonal
+                  </option>
+                </select>
+              </div>
+
+              <div className="settings-modal-actions">
+                <button
+                  type="button"
+                  className="settings-cancel-btn"
+                  onClick={() => {
+                    setShowCreateUser(false);
+                  }}
+                  disabled={savingUser}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="settings-green-btn"
+                  disabled={savingUser}
+                >
+                  {savingUser
+                    ? "Creating..."
+                    : "Create User"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          <div className="settings-save-row">
-            <button
-              type="button"
-              className="settings-green-btn"
-              onClick={handleSaveFarm}
-            >
-              Save Changes
-            </button>
-          </div>
         </div>
-      </section>
-
-      {/* =====================================
-          COMPLIANCE RULES
-      ===================================== */}
-
-      <section className="settings-card">
-        <div className="settings-card-header">
-          <h2>Compliance Rules</h2>
-        </div>
-
-        <div className="settings-card-content">
-          <div className="compliance-grid">
-            <div className="settings-form-group">
-              <label htmlFor="maxBreakHours">
-                Maximum hours without a break
-              </label>
-
-              <input
-                id="maxBreakHours"
-                type="number"
-                min="1"
-                value={maxBreakHours}
-                onChange={(e) =>
-                  setMaxBreakHours(e.target.value)
-                }
-              />
-            </div>
-
-            <div className="settings-form-group">
-              <label htmlFor="weeklyHours">
-                Standard weekly hours
-              </label>
-
-              <input
-                id="weeklyHours"
-                type="number"
-                min="1"
-                value={weeklyHours}
-                onChange={(e) =>
-                  setWeeklyHours(e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className="settings-save-row">
-            <button
-              type="button"
-              className="settings-green-btn"
-              onClick={handleSaveCompliance}
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================
-          USERS & ACCESS
-      ===================================== */}
-
-      <section className="settings-card users-access-card">
-        <div className="settings-card-header">
-          <h2>Users &amp; Access</h2>
-        </div>
-
-        <div className="settings-table-wrapper">
-          <table className="settings-users-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="settings-user-name">
-                    {user.name}
-                  </td>
-
-                  <td className="settings-user-email">
-                    {user.email}
-                  </td>
-
-                  <td>
-                    <span
-                      className={`settings-role-badge ${
-                        user.role === "Admin"
-                          ? "admin-role"
-                          : "staff-role"
-                      }`}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`settings-status-badge ${
-                        user.status === "Active"
-                          ? "active-user"
-                          : "inactive-user"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="settings-edit-btn"
-                      aria-label={`Edit ${user.name}`}
-                      onClick={() =>
-                        setSelectedUser({
-                          ...user,
-                        })
-                      }
-                    >
-                      <Pencil size={15} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="settings-table-footer">
-          {users.length} users
-        </div>
-      </section>
-
-      {/* =====================================
-          CHANGE PASSWORD MODAL
-      ===================================== */}
+      )}
 
       {showPasswordModal && (
         <div className="settings-modal-overlay">
@@ -464,73 +548,66 @@ function Settings() {
               <button
                 type="button"
                 className="settings-modal-close"
-                onClick={() =>
-                  setShowPasswordModal(false)
-                }
+                onClick={() => {
+                  setShowPasswordModal(false);
+                }}
+                disabled={changingPassword}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handlePasswordChange}>
+            <form onSubmit={handleChangePassword}>
               <div className="settings-form-group">
-                <label htmlFor="currentPassword">
+                <label htmlFor="current_password">
                   Current Password
                 </label>
 
                 <input
-                  id="currentPassword"
+                  id="current_password"
+                  name="current_password"
                   type="password"
                   value={
-                    passwords.currentPassword
+                    passwordForm.current_password
                   }
-                  onChange={(e) =>
-                    setPasswords({
-                      ...passwords,
-                      currentPassword:
-                        e.target.value,
-                    })
-                  }
+                  onChange={handlePasswordInput}
+                  required
                 />
               </div>
 
               <div className="settings-form-group">
-                <label htmlFor="newPassword">
+                <label htmlFor="new_password">
                   New Password
                 </label>
 
                 <input
-                  id="newPassword"
+                  id="new_password"
+                  name="new_password"
                   type="password"
-                  value={passwords.newPassword}
-                  onChange={(e) =>
-                    setPasswords({
-                      ...passwords,
-                      newPassword:
-                        e.target.value,
-                    })
+                  minLength="8"
+                  value={
+                    passwordForm.new_password
                   }
+                  onChange={handlePasswordInput}
+                  required
                 />
               </div>
 
               <div className="settings-form-group">
-                <label htmlFor="confirmPassword">
+                <label htmlFor="confirm_password">
                   Confirm New Password
                 </label>
 
                 <input
-                  id="confirmPassword"
+                  id="confirm_password"
+                  name="confirm_password"
                   type="password"
+                  minLength="8"
                   value={
-                    passwords.confirmPassword
+                    passwordForm.confirm_password
                   }
-                  onChange={(e) =>
-                    setPasswords({
-                      ...passwords,
-                      confirmPassword:
-                        e.target.value,
-                    })
-                  }
+                  onChange={handlePasswordInput}
+                  required
                 />
               </div>
 
@@ -538,9 +615,10 @@ function Settings() {
                 <button
                   type="button"
                   className="settings-cancel-btn"
-                  onClick={() =>
-                    setShowPasswordModal(false)
-                  }
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                  }}
+                  disabled={changingPassword}
                 >
                   Cancel
                 </button>
@@ -548,154 +626,18 @@ function Settings() {
                 <button
                   type="submit"
                   className="settings-green-btn"
+                  disabled={changingPassword}
                 >
-                  Change Password
+                  {changingPassword
+                    ? "Saving..."
+                    : "Change Password"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* =====================================
-          EDIT USER MODAL
-      ===================================== */}
-
-      {selectedUser && (
-        <div className="settings-modal-overlay">
-          <div className="settings-modal">
-            <div className="settings-modal-header">
-              <h2>Edit User</h2>
-
-              <button
-                type="button"
-                className="settings-modal-close"
-                onClick={() =>
-                  setSelectedUser(null)
-                }
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleUserUpdate}>
-              {/* NAME */}
-
-              <div className="settings-form-group">
-                <label htmlFor="editName">
-                  Name
-                </label>
-
-                <input
-                  id="editName"
-                  type="text"
-                  value={selectedUser.name}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      name: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* EMAIL */}
-
-              <div className="settings-form-group">
-                <label htmlFor="editEmail">
-                  Email
-                </label>
-
-                <input
-                  id="editEmail"
-                  type="email"
-                  value={selectedUser.email}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      email: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              {/* ROLE */}
-
-              <div className="settings-form-group">
-                <label htmlFor="editRole">
-                  Role
-                </label>
-
-                <select
-                  id="editRole"
-                  value={selectedUser.role}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      role: e.target.value,
-                    })
-                  }
-                >
-                  <option value="Admin">
-                    Admin
-                  </option>
-
-                  <option value="Staff">
-                    Staff
-                  </option>
-                </select>
-              </div>
-
-              {/* STATUS */}
-
-              <div className="settings-form-group">
-                <label htmlFor="editStatus">
-                  Status
-                </label>
-
-                <select
-                  id="editStatus"
-                  value={selectedUser.status}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      status: e.target.value,
-                    })
-                  }
-                >
-                  <option value="Active">
-                    Active
-                  </option>
-
-                  <option value="Inactive">
-                    Inactive
-                  </option>
-                </select>
-              </div>
-
-              <div className="settings-modal-actions">
-                <button
-                  type="button"
-                  className="settings-cancel-btn"
-                  onClick={() =>
-                    setSelectedUser(null)
-                  }
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  className="settings-green-btn"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+    </section>
   );
 }
 

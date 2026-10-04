@@ -1,219 +1,436 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  Clock3,
+  Coffee,
+  FileText,
+  Timer
+} from "lucide-react";
+
+import {
+  apiRequest,
+  getStoredUser
+} from "../api";
+
 import "../styles/HoursReporting.css";
 
 function HoursReporting() {
-  const [staff, setStaff] = useState("All Staff");
-  const [fromDate, setFromDate] = useState("2026-09-15");
-  const [toDate, setToDate] = useState("2026-09-27");
+  const currentUser = getStoredUser();
 
-  const employees = [
-    {
-      id: "EMP-001",
-      name: "John Doe",
-      role: "Field Supervisor",
-      regularHours: "38h 00m",
-      breakTime: "2h 30m",
-      totalHours: "40h 30m",
-    },
-    {
-      id: "EMP-002",
-      name: "Mary Smith",
-      role: "Irrigation Technician",
-      regularHours: "36h 00m",
-      breakTime: "2h 30m",
-      totalHours: "38h 30m",
-    },
-    {
-      id: "EMP-003",
-      name: "Robert Brown",
-      role: "Seasonal Labourer",
-      regularHours: "22h 30m",
-      breakTime: "1h 15m",
-      totalHours: "23h 45m",
-    },
-    {
-      id: "EMP-004",
-      name: "Linda White",
-      role: "Pest Control Officer",
-      regularHours: "18h 00m",
-      breakTime: "1h 00m",
-      totalHours: "19h 00m",
-    },
-    {
-      id: "EMP-005",
-      name: "David Green",
-      role: "Harvest Coordinator",
-      regularHours: "40h 00m",
-      breakTime: "2h 30m",
-      totalHours: "42h 30m",
-    },
-  ];
+  const isAdmin = Boolean(
+    currentUser?.is_admin
+  );
 
-  const handleViewHours = () => {
-    console.log("Staff:", staff);
-    console.log("From:", fromDate);
-    console.log("To:", toDate);
+  const getInitialFromDate = () => {
+    const date = new Date();
+
+    date.setDate(
+      date.getDate() - 13
+    );
+
+    return date
+      .toISOString()
+      .slice(0, 10);
+  };
+
+  const getInitialToDate = () => {
+    return new Date()
+      .toISOString()
+      .slice(0, 10);
+  };
+
+  const [fromDate, setFromDate] =
+    useState(getInitialFromDate);
+
+  const [toDate, setToDate] =
+    useState(getInitialToDate);
+
+  const [selectedEmployeeId, setSelectedEmployeeId] =
+    useState("");
+
+  const [employees, setEmployees] =
+    useState([]);
+
+  const [report, setReport] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [loadingEmployees, setLoadingEmployees] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const loadEmployees = async () => {
+    if (!isAdmin) {
+      return;
+    }
+
+    setLoadingEmployees(true);
+
+    try {
+      const data = await apiRequest(
+        "/employees?status=Active"
+      );
+
+      setEmployees(data);
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  const loadReport = async () => {
+    if (!fromDate || !toDate) {
+      setError(
+        "Please select both dates."
+      );
+      return;
+    }
+
+    if (toDate < fromDate) {
+      setError(
+        "The end date cannot be before the start date."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const params = new URLSearchParams({
+        from_date: fromDate,
+        to_date: toDate
+      });
+
+      if (
+        isAdmin &&
+        selectedEmployeeId
+      ) {
+        params.set(
+          "employee_id",
+          selectedEmployeeId
+        );
+      }
+
+      const data = await apiRequest(
+        `/hours?${params.toString()}`
+      );
+
+      setReport(data);
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+      setReport(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="hours-reporting-page">
-
-      {/* HEADER */}
+    <section className="hours-reporting-page">
       <div className="hours-header">
-        <h1>Hours Reporting</h1>
+        <div>
+          <h1>
+            Hours Reporting
+          </h1>
+
+          <p>
+            Review worked hours and break time.
+          </p>
+        </div>
 
         <div className="admin-area">
-          <span>Welcome, Admin</span>
-          <div className="admin-icon">♙</div>
+          <span>
+            {currentUser?.first_name}{" "}
+            {currentUser?.last_name}
+          </span>
         </div>
       </div>
 
-      {/* FILTERS */}
       <section className="filter-card">
-
         <div className="filter-field">
-          <label htmlFor="staff">Staff</label>
-
-          <select
-            id="staff"
-            value={staff}
-            onChange={(e) => setStaff(e.target.value)}
-          >
-            <option>All Staff</option>
-            <option>John Doe</option>
-            <option>Mary Smith</option>
-            <option>Robert Brown</option>
-            <option>Linda White</option>
-            <option>David Green</option>
-          </select>
-        </div>
-
-        <div className="filter-field">
-          <label htmlFor="fromDate">From Date</label>
+          <label htmlFor="fromDate">
+            From Date
+          </label>
 
           <input
             id="fromDate"
             type="date"
             value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
+            onChange={(event) => {
+              setFromDate(
+                event.target.value
+              );
+            }}
           />
         </div>
 
         <div className="filter-field">
-          <label htmlFor="toDate">To Date</label>
+          <label htmlFor="toDate">
+            To Date
+          </label>
 
           <input
             id="toDate"
             type="date"
             value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
+            onChange={(event) => {
+              setToDate(
+                event.target.value
+              );
+            }}
           />
         </div>
+
+        {isAdmin && (
+          <div className="filter-field">
+            <label htmlFor="staff">
+              Staff
+            </label>
+
+            <select
+              id="staff"
+              value={selectedEmployeeId}
+              onChange={(event) => {
+                setSelectedEmployeeId(
+                  event.target.value
+                );
+              }}
+              disabled={loadingEmployees}
+            >
+              <option value="">
+                All Staff
+              </option>
+
+              {employees.map((employee) => (
+                <option
+                  key={employee.employee_id}
+                  value={employee.employee_id}
+                >
+                  {employee.display_id} —{" "}
+                  {employee.first_name}{" "}
+                  {employee.last_name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <button
           type="button"
           className="view-hours-btn"
-          onClick={handleViewHours}
+          onClick={loadReport}
+          disabled={loading}
         >
-          View Hours
+          {loading
+            ? "Loading..."
+            : "View Hours"}
         </button>
-
       </section>
 
-      {/* SUMMARY CARDS */}
-      <section className="summary-cards">
-
-        <div className="summary-card">
-          <div className="summary-icon">◷</div>
-
-          <div>
-            <span>Total Hours</span>
-            <h2>164h 15m</h2>
-          </div>
+      {error && (
+        <div className="hours-error">
+          {error}
         </div>
+      )}
 
-        <div className="summary-card">
-          <div className="summary-icon">✓</div>
+      {report && (
+        <>
+          <section className="summary-cards">
+            <div className="summary-card">
+              <div className="summary-icon">
+                <Clock3 size={22} />
+              </div>
 
-          <div>
-            <span>Regular Hours</span>
-            <h2>154h 30m</h2>
-          </div>
-        </div>
+              <div>
+                <span>
+                  Total Hours
+                </span>
 
-        <div className="summary-card">
-          <div className="summary-icon">☕</div>
+                <h2>
+                  {report.total_hours_display}
+                </h2>
+              </div>
+            </div>
 
-          <div>
-            <span>Break Time</span>
-            <h2>9h 45m</h2>
-          </div>
-        </div>
+            <div className="summary-card">
+              <div className="summary-icon">
+                <Timer size={22} />
+              </div>
 
-      </section>
+              <div>
+                <span>
+                  Worked Hours
+                </span>
 
-      {/* HOURS TABLE */}
-      <section className="hours-table-card">
+                <h2>
+                  {report.total_regular_hours_display}
+                </h2>
+              </div>
+            </div>
 
-        <h3>Hours Summary</h3>
+            <div className="summary-card">
+              <div className="summary-icon">
+                <Coffee size={22} />
+              </div>
 
-        <div className="hours-table-wrapper">
+              <div>
+                <span>
+                  Break Time
+                </span>
 
-          <table className="hours-table">
+                <h2>
+                  {report.total_break_hours_display}
+                </h2>
+              </div>
+            </div>
 
-            <thead>
-              <tr>
-                <th>Staff</th>
-                <th>Role</th>
-                <th>Regular Hours</th>
-                <th>Break Time</th>
-                <th>Total Hours</th>
-              </tr>
-            </thead>
+            <div className="summary-card">
+              <div className="summary-icon">
+                <FileText size={22} />
+              </div>
 
-            <tbody>
-              {employees.map((employee) => (
-                <tr key={employee.id}>
+              <div>
+                <span>
+                  Staff Members
+                </span>
 
-                  <td>
-                    <div className="employee-name">
-                      {employee.name}
-                    </div>
+                <h2>
+                  {report.employees.length}
+                </h2>
+              </div>
+            </div>
+          </section>
 
-                    <div className="employee-id">
-                      {employee.id}
-                    </div>
-                  </td>
+          <section className="hours-table-card">
+            <div className="hours-table-heading">
+              <div>
+                <h3>
+                  Hours Summary
+                </h3>
 
-                  <td>{employee.role}</td>
+                <p>
+                  {report.from_date}
+                  {" to "}
+                  {report.to_date}
+                </p>
+              </div>
+            </div>
 
-                  <td>{employee.regularHours}</td>
+            <div className="hours-table-wrapper">
+              <table className="hours-table">
+                <thead>
+                  <tr>
+                    <th>
+                      Staff
+                    </th>
 
-                  <td className="break-time">
-                    {employee.breakTime}
-                  </td>
+                    <th>
+                      Role
+                    </th>
 
-                  <td>
-                    <span className="total-hours-badge">
-                      {employee.totalHours}
-                    </span>
-                  </td>
+                    <th>
+                      Regular Hours
+                    </th>
 
-                </tr>
-              ))}
-            </tbody>
+                    <th>
+                      Break Time
+                    </th>
 
-          </table>
+                    <th>
+                      Total Hours
+                    </th>
 
-        </div>
+                    <th>
+                      Records
+                    </th>
+                  </tr>
+                </thead>
 
-        <div className="table-footer">
-          {employees.length} staff members · {fromDate} to {toDate}
-        </div>
+                <tbody>
+                  {report.employees.map(
+                    (employee) => (
+                      <tr
+                        key={
+                          employee.employee_id
+                        }
+                      >
+                        <td>
+                          <div className="employee-name">
+                            {employee.employee_name}
+                          </div>
 
-      </section>
+                          <div className="employee-id">
+                            {employee.display_id}
+                          </div>
+                        </td>
 
-    </div>
+                        <td>
+                          {employee.role}
+                        </td>
+
+                        <td>
+                          {employee.regular_hours_display}
+                        </td>
+
+                        <td className="break-time">
+                          {employee.break_hours_display}
+                        </td>
+
+                        <td>
+                          <span className="total-hours-badge">
+                            {employee.total_hours_display}
+                          </span>
+                        </td>
+
+                        <td>
+                          {employee.completed_log_count}
+                        </td>
+                      </tr>
+                    )
+                  )}
+
+                  {report.employees.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="no-hours"
+                      >
+                        No hours found for this period.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="hours-table-footer">
+              {report.employees.length} staff member
+              {report.employees.length === 1
+                ? ""
+                : "s"}
+            </div>
+          </section>
+        </>
+      )}
+    </section>
   );
 }
 

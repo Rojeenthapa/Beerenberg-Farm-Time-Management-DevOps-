@@ -54,19 +54,6 @@ function App() {
         }
       );
 
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      if (!contentType.includes("application/json")) {
-        const htmlResponse = await response.text();
-
-        throw new Error(
-          "The API returned HTML instead of JSON. " +
-          "Check that Flask is running on port 5000 " +
-          "and the Vite proxy is configured."
-        );
-      }
-
       const data = await response.json();
 
       if (!response.ok) {
@@ -83,8 +70,9 @@ function App() {
           JSON.stringify(data.user)
         );
       } else {
-        localStorage.removeItem(
-          "currentUser"
+        sessionStorage.setItem(
+          "currentUser",
+          JSON.stringify(data.user)
         );
       }
 
@@ -97,6 +85,10 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem(
+      "currentUser"
+    );
+
+    sessionStorage.removeItem(
       "currentUser"
     );
 
@@ -135,7 +127,7 @@ function App() {
             <h3>Welcome back!</h3>
 
             <p>
-              Login to your administrator account
+              Login to your account
             </p>
           </div>
 
@@ -182,7 +174,7 @@ function App() {
                 className="password-toggle"
                 onClick={() => {
                   setShowPassword(
-                    (currentValue) => !currentValue
+                    (value) => !value
                   );
                 }}
               >
@@ -240,7 +232,7 @@ function App() {
           </form>
 
           <p className="signup-text">
-            Administrator access only
+            Admin and staff access
           </p>
         </section>
 
@@ -249,7 +241,7 @@ function App() {
           type="button"
           onClick={() => {
             window.alert(
-              "Contact your system administrator for help."
+              "Contact your administrator for help."
             );
           }}
         >

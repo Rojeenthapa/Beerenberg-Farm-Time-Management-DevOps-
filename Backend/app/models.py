@@ -109,9 +109,40 @@ class Employee(db.Model):
         cascade="all, delete-orphan"
     )
 
+    @property
+    def display_id(self):
+        if self.hire_date is None:
+            return None
+
+        surname = "".join(
+            character
+            for character in self.last_name.upper()
+            if character.isalnum()
+        )
+
+        surname_code = surname[:3].ljust(
+            3,
+            "X"
+        )
+
+        joining_day = self.hire_date.strftime(
+            "%d"
+        )
+
+        joining_month = self.hire_date.strftime(
+            "%m"
+        )
+
+        return (
+            f"{surname_code}-"
+            f"{joining_day}"
+            f"{joining_month}"
+        )
+
     def to_dict(self):
         return {
             "employee_id": self.employee_id,
+            "display_id": self.display_id,
             "first_name": self.first_name,
             "last_name": self.last_name,
             "full_name": (
@@ -206,6 +237,11 @@ class User(UserMixin, db.Model):
         return {
             "user_id": self.user_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "role": self.role,
             "is_admin": self.is_admin,
             "email": (
@@ -221,6 +257,14 @@ class User(UserMixin, db.Model):
             "last_name": (
                 self.employee.last_name
                 if self.employee is not None
+                else None
+            ),
+            "hire_date": (
+                self.employee.hire_date.isoformat()
+                if (
+                    self.employee is not None
+                    and self.employee.hire_date is not None
+                )
                 else None
             )
         }
@@ -281,6 +325,11 @@ class Credential(db.Model):
         return {
             "credential_id": self.credential_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "method_type": self.method_type,
             "external_ref": self.external_ref,
             "status": self.status,
@@ -409,6 +458,11 @@ class Shift(db.Model):
         return {
             "shift_id": self.shift_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "date": (
                 self.date.isoformat()
                 if self.date is not None
@@ -483,6 +537,11 @@ class TimeLog(db.Model):
         return {
             "timelog_id": self.timelog_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "clock_in": (
                 self.clock_in.isoformat()
                 if self.clock_in is not None
@@ -612,6 +671,11 @@ class PayrollRecord(db.Model):
         return {
             "payroll_id": self.payroll_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "period_start": (
                 self.period_start.isoformat()
                 if self.period_start is not None
@@ -705,6 +769,11 @@ class ExceptionRecord(db.Model):
         return {
             "exception_id": self.exception_id,
             "employee_id": self.employee_id,
+            "display_id": (
+                self.employee.display_id
+                if self.employee is not None
+                else None
+            ),
             "rule_id": self.rule_id,
             "type": self.type,
             "severity": self.severity,

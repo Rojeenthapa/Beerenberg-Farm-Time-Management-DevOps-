@@ -591,3 +591,155 @@
     width: 100%;
   }
 }
+
+.settings-success,
+.settings-error {
+  margin-bottom: 15px;
+  padding: 11px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.settings-success {
+  border: 1px solid #a7dfbd;
+  background: #effcf3;
+  color: #18733a;
+}
+
+.settings-error {
+  border: 1px solid #efb6b6;
+  background: #fff1f1;
+  color: #b42318;
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.settings-card-header p {
+  margin: 5px 0 0;
+  color: #9298aa;
+  font-size: 12px;
+}
+
+.settings-loading {
+  padding: 20px;
+  color: #9298aa;
+  font-size: 13px;
+}
+
+.settings-form-group small {
+  color: #9298aa;
+  font-size: 11px;
+}
+
+.settings-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  overflow-y: auto;
+
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.settings-modal {
+  width: 100%;
+  max-width: 470px;
+  max-height: calc(100vh - 40px);
+
+  overflow-y: auto;
+
+  padding: 22px;
+
+  background: #ffffff;
+  border-radius: 10px;
+
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
+}
+
+.settings-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 20px;
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 20px;
+}
+
+.settings-modal-close {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 5px;
+
+  background: transparent;
+  color: #6b7280;
+
+  cursor: pointer;
+}
+
+.settings-modal-close:hover {
+  background: #f3f4f6;
+}
+
+.settings-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 22px;
+}
+
+.settings-cancel-btn {
+  min-height: 38px;
+  padding: 0 16px;
+
+  border: 1px solid #d7dce2;
+  border-radius: 5px;
+
+  background: #ffffff;
+  color: #596273;
+
+  cursor: pointer;
+}
+
+.settings-cancel-btn:hover {
+  background: #f7f8fa;
+}
+
+.settings-green-btn:disabled,
+.settings-cancel-btn:disabled,
+.settings-modal-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+  .settings-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-modal {
+    padding: 18px;
+  }
+}

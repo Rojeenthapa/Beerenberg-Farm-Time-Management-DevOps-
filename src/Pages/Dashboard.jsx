@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import {
   CalendarDays,
   CreditCard,
@@ -23,8 +24,11 @@ function Dashboard({
   currentUser,
   onLogout
 }) {
-  const [activePage, setActivePage] = useState(
-    "Dashboard"
+  const [activePage, setActivePage] =
+    useState("Dashboard");
+
+  const isAdmin = Boolean(
+    currentUser?.is_admin
   );
 
   const fullName = [
@@ -34,67 +38,118 @@ function Dashboard({
     .filter(Boolean)
     .join(" ");
 
-  const displayName = fullName || "Administrator";
+  const displayName =
+    fullName || "User";
 
   const navigationItems = [
     {
       label: "Dashboard",
-      icon: LayoutDashboard
-    },
-    {
-      label: "Employees",
-      icon: Users
+      icon: LayoutDashboard,
+      adminOnly: false
     },
     {
       label: "Clock In/Out",
-      icon: Clock3
+      icon: Clock3,
+      adminOnly: false
     },
     {
       label: "Hours Reporting",
-      icon: FileText
+      icon: FileText,
+      adminOnly: false
     },
     {
       label: "Roster",
-      icon: CalendarDays
+      icon: CalendarDays,
+      adminOnly: false
     },
     {
       label: "Payroll",
-      icon: CreditCard
+      icon: CreditCard,
+      adminOnly: false
+    },
+    {
+      label: "Employees",
+      icon: Users,
+      adminOnly: true
     },
     {
       label: "Settings",
-      icon: SettingsIcon
+      icon: SettingsIcon,
+      adminOnly: false
     }
   ];
 
+  const visibleNavigationItems =
+    navigationItems.filter(
+      (item) =>
+        !item.adminOnly || isAdmin
+    );
+
+  const handlePageChange = (page) => {
+    const requestedPage =
+      navigationItems.find(
+        (item) => item.label === page
+      );
+
+    if (
+      requestedPage?.adminOnly &&
+      !isAdmin
+    ) {
+      setActivePage("Dashboard");
+      return;
+    }
+
+    setActivePage(page);
+  };
+
   const renderPage = () => {
-    if (activePage === "Employees") {
-      return <Employees />;
+    if (
+      activePage === "Employees" &&
+      isAdmin
+    ) {
+      return (
+        <Employees />
+      );
+    }
+
+    if (
+      activePage === "Payroll" &&
+      isAdmin
+    ) {
+      return (
+        <Payroll />
+      );
     }
 
     if (activePage === "Clock In/Out") {
-      return <ClockInOut />;
+      return (
+        <ClockInOut />
+      );
     }
 
     if (activePage === "Hours Reporting") {
-      return <HoursReporting />;
+      return (
+        <HoursReporting />
+      );
     }
 
     if (activePage === "Roster") {
-      return <Roster />;
-    }
-
-    if (activePage === "Payroll") {
-      return <Payroll />;
+      return (
+        <Roster />
+      );
     }
 
     if (activePage === "Settings") {
-      return <Settings />;
+      return (
+        <Settings />
+      );
     }
 
     return (
       <section className="dashboard-content">
-        <h1>Dashboard</h1>
+        <h1>
+          Dashboard
+        </h1>
 
         <p className="page-description">
           Welcome back, {displayName}.
@@ -106,8 +161,8 @@ function Dashboard({
           </h2>
 
           <p>
-            Use the navigation menu to manage
-            employees, time logs, rosters, and payroll.
+            Use the navigation menu to access
+            the features available to your account.
           </p>
         </div>
       </section>
@@ -123,13 +178,18 @@ function Dashboard({
           </div>
 
           <div className="brand-text">
-            <h1>Farm Time</h1>
-            <p>Management System</p>
+            <h1>
+              Farm Time
+            </h1>
+
+            <p>
+              Management System
+            </p>
           </div>
         </div>
 
         <nav className="navigation">
-          {navigationItems.map((item) => {
+          {visibleNavigationItems.map((item) => {
             const Icon = item.icon;
 
             return (
@@ -142,7 +202,9 @@ function Dashboard({
                     : "nav-item"
                 }
                 onClick={() => {
-                  setActivePage(item.label);
+                  handlePageChange(
+                    item.label
+                  );
                 }}
               >
                 <span className="nav-icon">
@@ -181,7 +243,8 @@ function Dashboard({
           </h2>
 
           <div className="user-info">
-            {displayName} · {currentUser?.role}
+            {displayName} ·{" "}
+            {currentUser?.role}
           </div>
         </header>
 
