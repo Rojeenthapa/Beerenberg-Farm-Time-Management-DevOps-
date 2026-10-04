@@ -8,6 +8,10 @@ from flask import Blueprint
 from flask import jsonify
 from flask import request
 
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import verify_jwt_in_request
+
 from .extensions import db
 from .models import AdminAdjustment
 from .models import Break
@@ -104,7 +108,27 @@ def parse_integer(
         )
 
 
-def get_authenticated_user():
+def get_jwt_user():
+    try:
+        verify_jwt_in_request(
+            optional=True
+        )
+
+        identity = get_jwt_identity()
+
+        if identity is None:
+            return None
+
+        return db.session.get(
+            User,
+            int(identity)
+        )
+
+    except Exception:
+        return None
+
+
+def get_header_user():
     user_id = request.headers.get(
         "X-User-Id"
     )
@@ -127,6 +151,15 @@ def get_authenticated_user():
     )
 
 
+def get_authenticated_user():
+    jwt_user = get_jwt_user()
+
+    if jwt_user is not None:
+        return jwt_user
+
+    return get_header_user()
+
+
 def require_authenticated_user():
     user = get_authenticated_user()
 
@@ -134,7 +167,7 @@ def require_authenticated_user():
         return (
             None,
             error_response(
-                "Authentication required",
+                "Authentication required or token expired",
                 401
             )
         )
@@ -192,7 +225,9 @@ def employee_can_access(
     )
 
 
-def decimal_money(value):
+def decimal_money(
+    value
+):
     if value is None:
         return Decimal("0.00")
 
@@ -204,7 +239,9 @@ def decimal_money(value):
     )
 
 
-def decimal_hours(value):
+def decimal_hours(
+    value
+):
     if value is None:
         return Decimal("0.00")
 
@@ -216,7 +253,9 @@ def decimal_hours(value):
     )
 
 
-def time_to_seconds(value):
+def time_to_seconds(
+    value
+):
     if value is None:
         return 0
 
@@ -239,15 +278,18 @@ def calculate_break_hours(
         ):
             continue
 
-        start = time_to_seconds(
+        start_seconds = time_to_seconds(
             break_record.start_time
         )
 
-        end = time_to_seconds(
+        end_seconds = time_to_seconds(
             break_record.end_time
         )
 
-        duration = end - start
+        duration = (
+            end_seconds -
+            start_seconds
+        )
 
         if duration < 0:
             duration += 24 * 60 * 60
@@ -479,15 +521,34 @@ def login():
             404
         )
 
-    if employee.status.lower() != "active":
+    if employee.status.strip().lower() != "active":
         return error_response(
             "This account is inactive",
             403
         )
 
+    access_token = create_access_token(
+        identity=str(
+            user.user_id
+        ),
+        additional_claims={
+            "role": user.role,
+            "employee_id": user.employee_id
+        }
+    )
+
     return jsonify({
         "message": "Login successful",
+        "access_token": access_token,
+        "expires_in_seconds": 30 * 60,
         "user": user.to_dict()
+    }), 200
+
+
+@main_bp.post("/api/logout")
+def logout():
+    return jsonify({
+        "message": "Logged out successfully"
     }), 200
 
 
@@ -523,6 +584,150 @@ def get_employee_count():
     return jsonify({
         "employee_count": count
     }), 200
+
+
+@main_bp.post("/api/users")
+def create_user():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = get_request_data()
+
+    required_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "password",
+        "user_id",
+        "role",
+        "employee_role",
+        "contract_type",
+        "standard_hours",
+        "pay_rate",
+        "overtime_pay_rate",
+        "hire_date"
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if data.get(field) in (
+            None,
+            ""
+        )
+    ]
+
+    if missing_fields:
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    return create_employee()
+
+
+@main_bp.get("/api/users")
+def get_users():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    users = User.query.join(
+        Employee
+    ).order_by(
+        Employee.last_name,
+        Employee.first_name
+    ).all()
+
+    return jsonify([
+        user.to_dict()
+        for user in users
+    ]), 200
+
+
+@main_bp.post(
+    "/api/password/change"
+)
+def change_password():
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = get_request_data()
+
+    current_password = data.get(
+        "current_password",
+        ""
+    )
+
+    new_password = data.get(
+        "new_password",
+        ""
+    )
+
+    confirm_password = data.get(
+        "confirm_password",
+        ""
+    )
+
+    if not current_password:
+        return error_response(
+            "Current password is required"
+        )
+
+    if not new_password:
+        return error_response(
+            "New password is required"
+        )
+
+    if len(new_password) < 8:
+        return error_response(
+            "New password must contain at least 8 characters"
+        )
+
+    if new_password != confirm_password:
+        return error_response(
+            "New passwords do not match"
+        )
+
+    if not user.check_password(
+        current_password
+    ):
+        return error_response(
+            "Current password is incorrect",
+            401
+        )
+
+    try:
+        user.set_password(
+            new_password
+        )
+
+        db.session.commit()
+
+        return jsonify({
+            "message": (
+                "Password changed successfully"
+            )
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
 
 
 @main_bp.get("/api/employees")
@@ -890,11 +1095,9 @@ def create_employee_login_account(
     if response is not None:
         return response
 
-    existing_user = User.query.filter_by(
+    if User.query.filter_by(
         employee_id=employee.employee_id
-    ).first()
-
-    if existing_user is not None:
+    ).first() is not None:
         return error_response(
             "This employee already has login credentials",
             409
@@ -1097,6 +1300,84 @@ def create_shift():
         )
 
 
+@main_bp.put(
+    "/api/shifts/<int:shift_id>"
+)
+def update_shift(shift_id):
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    shift = db.session.get(
+        Shift,
+        shift_id
+    )
+
+    if shift is None:
+        return error_response(
+            "Shift not found",
+            404
+        )
+
+    data = get_request_data()
+
+    try:
+        if "employee_id" in data:
+            shift.employee_id = parse_integer(
+                data["employee_id"],
+                "employee_id"
+            )
+
+        if "date" in data:
+            shift.date = parse_date(
+                data["date"],
+                "date"
+            )
+
+        if "start_time" in data:
+            shift.start_time = parse_time(
+                data["start_time"],
+                "start_time"
+            )
+
+        if "end_time" in data:
+            shift.end_time = parse_time(
+                data["end_time"],
+                "end_time"
+            )
+
+    except ValueError as error:
+        return error_response(
+            str(error)
+        )
+
+    if "status" in data:
+        shift.status = data["status"]
+
+    if shift.end_time <= shift.start_time:
+        return error_response(
+            "end_time must be later than start_time"
+        )
+
+    try:
+        db.session.commit()
+
+        return jsonify(
+            shift.to_dict()
+        ), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
 @main_bp.delete(
     "/api/shifts/<int:shift_id>"
 )
@@ -1180,6 +1461,42 @@ def get_time_logs():
     ]), 200
 
 
+@main_bp.get(
+    "/api/timelogs/<int:timelog_id>"
+)
+def get_time_log(timelog_id):
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    time_log = db.session.get(
+        TimeLog,
+        timelog_id
+    )
+
+    if time_log is None:
+        return error_response(
+            "Time log not found",
+            404
+        )
+
+    if not employee_can_access(
+        user,
+        time_log.employee_id
+    ):
+        return error_response(
+            "You cannot access this time log",
+            403
+        )
+
+    return jsonify(
+        time_log.to_dict()
+    ), 200
+
+
 @main_bp.post(
     "/api/timelogs/clock-in"
 )
@@ -1245,6 +1562,7 @@ def clock_in():
     time_log = TimeLog(
         employee_id=employee_id,
         clock_in=now,
+        clock_out=None,
         date=now.date()
     )
 
@@ -1313,6 +1631,93 @@ def clock_out(timelog_id):
         return jsonify(
             time_log.to_dict()
         ), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.post(
+    "/api/timelogs/<int:timelog_id>/breaks"
+)
+def create_break(timelog_id):
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    time_log = db.session.get(
+        TimeLog,
+        timelog_id
+    )
+
+    if time_log is None:
+        return error_response(
+            "Time log not found",
+            404
+        )
+
+    if not employee_can_access(
+        user,
+        time_log.employee_id
+    ):
+        return error_response(
+            "You cannot access this time log",
+            403
+        )
+
+    data = get_request_data()
+
+    try:
+        start_time = parse_time(
+            data.get("start_time"),
+            "start_time"
+        )
+
+        end_time = None
+
+        if data.get("end_time"):
+            end_time = parse_time(
+                data["end_time"],
+                "end_time"
+            )
+
+    except ValueError as error:
+        return error_response(
+            str(error)
+        )
+
+    if (
+        end_time is not None
+        and end_time < start_time
+    ):
+        return error_response(
+            "end_time cannot be before start_time"
+        )
+
+    break_record = Break(
+        timelog_id=timelog_id,
+        start_time=start_time,
+        end_time=end_time,
+        reason=data.get("reason")
+    )
+
+    try:
+        db.session.add(
+            break_record
+        )
+
+        db.session.commit()
+
+        return jsonify(
+            break_record.to_dict()
+        ), 201
 
     except Exception as error:
         db.session.rollback()

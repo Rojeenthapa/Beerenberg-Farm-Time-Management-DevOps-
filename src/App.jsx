@@ -16,7 +16,8 @@ import Dashboard from "./Pages/Dashboard";
 import {
   apiRequest,
   clearStoredUser,
-  getStoredUser
+  getStoredUser,
+  storeAuthentication
 } from "./api";
 
 import "./App.css";
@@ -46,6 +47,32 @@ function App() {
 
   const [error, setError] =
     useState("");
+
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      clearStoredUser();
+
+      setCurrentUser(null);
+      setLoginId("");
+      setPassword("");
+      setError(
+        "Your session expired. Please log in again."
+      );
+    };
+
+    window.addEventListener(
+      "auth-expired",
+      handleAuthExpired
+    );
+
+    return () => {
+      window.removeEventListener(
+        "auth-expired",
+        handleAuthExpired
+      );
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -116,30 +143,19 @@ function App() {
         }
       );
 
-      if (rememberMe) {
-        localStorage.setItem(
-          "currentUser",
-          JSON.stringify(
-            response.user
-          )
-        );
-
-        sessionStorage.removeItem(
-          "currentUser"
-        );
-
-      } else {
-        sessionStorage.setItem(
-          "currentUser",
-          JSON.stringify(
-            response.user
-          )
-        );
-
-        localStorage.removeItem(
-          "currentUser"
+      if (
+        !response.access_token
+      ) {
+        throw new Error(
+          "The server did not return an access token."
         );
       }
+
+      storeAuthentication(
+        response.user,
+        response.access_token,
+        rememberMe
+      );
 
       setCurrentUser(
         response.user
@@ -159,7 +175,19 @@ function App() {
   };
 
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await apiRequest(
+        "/logout",
+        {
+          method: "POST"
+        }
+      );
+
+    } catch {
+      // The local token is cleared below.
+    }
+
     clearStoredUser();
 
     setCurrentUser(null);

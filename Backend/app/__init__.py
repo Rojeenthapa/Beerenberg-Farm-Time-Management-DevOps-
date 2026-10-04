@@ -1,9 +1,11 @@
 import os
+from datetime import timedelta
 
 from flask import Flask
 
 from .extensions import cors
 from .extensions import db
+from .extensions import jwt
 from .extensions import migrate
 
 
@@ -23,6 +25,13 @@ def create_app():
             "SECRET_KEY",
             "change-this-secret-key"
         ),
+        JWT_SECRET_KEY=os.getenv(
+            "JWT_SECRET_KEY",
+            "change-this-jwt-secret-key"
+        ),
+        JWT_ACCESS_TOKEN_EXPIRES=timedelta(
+            minutes=30
+        ),
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "DATABASE_URL",
             "mysql+pymysql://root:password@127.0.0.1:3306/beerenberg_tms"
@@ -32,6 +41,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
 
     cors.init_app(
         app,
