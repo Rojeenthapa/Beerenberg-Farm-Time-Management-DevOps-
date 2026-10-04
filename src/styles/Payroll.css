@@ -1,152 +1,101 @@
-/* =========================================
-   PAYROLL PAGE
-========================================= */
+@import "./Shared.css";
 
 .payroll-page {
   width: 100%;
-  min-height: 100%;
-  color: #172033;
 }
-
-
-/* =========================================
-   HEADER
-========================================= */
 
 .payroll-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-
+  justify-content: space-between;
   margin-bottom: 28px;
 }
 
 .payroll-header h1 {
   margin: 0;
-
-  font-size: 26px;
-  font-weight: 700;
-
   color: #172033;
+  font-size: 26px;
+}
+
+.payroll-header p {
+  margin: 7px 0 0;
+  color: #758094;
+  font-size: 14px;
 }
 
 .payroll-admin {
   display: flex;
   align-items: center;
-
   gap: 10px;
-
-  font-size: 14px;
-
   color: #344054;
+  font-size: 14px;
 }
 
 .payroll-admin-icon {
   width: 34px;
   height: 34px;
-
-  border-radius: 50%;
-
-  background: #e9edf1;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
+  border-radius: 50%;
+  background: #e9edf1;
   color: #778090;
 }
 
-
-/* =========================================
-   PAY PERIOD FILTER
-========================================= */
-
 .payroll-filter-card {
-  width: 100%;
-
-  min-height: 90px;
-
   display: flex;
   align-items: flex-end;
-
+  flex-wrap: wrap;
   gap: 15px;
-
   padding: 18px 20px;
-
-  background: white;
-
   border: 1px solid #e2e5e9;
   border-radius: 9px;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
 }
 
 .payroll-filter-field {
   display: flex;
   flex-direction: column;
-
   gap: 7px;
 }
 
 .payroll-filter-field label {
-  font-size: 12px;
-
   color: #536174;
+  font-size: 12px;
 }
 
+.payroll-filter-field input,
 .payroll-filter-field select {
   width: 215px;
   height: 38px;
-
   padding: 0 12px;
-
   border: 1px solid #d3d8df;
   border-radius: 5px;
-
-  background: white;
-
-  color: #25324a;
-
-  font-size: 14px;
-
   outline: none;
+  background: #ffffff;
+  color: #25324a;
+  font-size: 14px;
 }
-
-.payroll-filter-field select:focus {
-  border-color: #286b45;
-}
-
-
-/* GENERATE REPORT */
 
 .generate-report-btn {
   height: 38px;
-
   padding: 0 20px;
-
   border: none;
   border-radius: 4px;
-
   background: #286b45;
-
-  color: white;
-
+  color: #ffffff;
   font-size: 14px;
   font-weight: 600;
-
-  cursor: pointer;
-
-  transition: background 0.2s ease;
 }
 
 .generate-report-btn:hover {
   background: #205b3a;
 }
 
-
-/* =========================================
-   TOTAL PAYROLL SECTION
-========================================= */
+.generate-report-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 
 .payroll-total-section {
   margin-top: 24px;
@@ -154,333 +103,169 @@
 
 .payroll-total-card {
   width: 310px;
-
   min-height: 108px;
-
-  padding: 20px;
-
   display: flex;
   align-items: center;
-
   gap: 15px;
-
-  background: white;
-
+  padding: 20px;
   border: 1px solid #e2e5e9;
   border-radius: 9px;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
 }
 
 .payroll-total-icon {
   width: 42px;
   height: 42px;
-
-  min-width: 42px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 50%;
-
   background: #f5f8f6;
-
   color: #287347;
 }
 
 .payroll-total-card p {
   margin: 0;
-
   color: #687386;
-
   font-size: 12px;
 }
 
 .payroll-total-card h2 {
   margin: 3px 0;
-
-  font-size: 24px;
-  font-weight: 700;
-
   color: #172033;
+  font-size: 24px;
 }
 
 .payroll-total-card span {
   color: #9299aa;
-
   font-size: 11px;
 }
 
-
-/* =========================================
-   PAYROLL TABLE CARD
-========================================= */
-
 .payroll-table-card {
-  margin-top: 24px;
-
   width: 100%;
-
-  background: white;
-
+  margin-top: 24px;
+  overflow: hidden;
   border: 1px solid #e2e5e9;
   border-radius: 9px;
-
-  overflow: hidden;
-
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #ffffff;
 }
-
-
-/* TABLE TITLE */
 
 .payroll-table-title {
   padding: 16px;
-
   border-bottom: 1px solid #edf0f2;
 }
 
 .payroll-table-title h3 {
   margin: 0;
-
   font-size: 16px;
-  font-weight: 600;
-
-  color: #172033;
-}
-
-
-/* =========================================
-   TABLE
-========================================= */
-
-.payroll-table-wrapper {
-  width: 100%;
-
-  overflow-x: auto;
 }
 
 .payroll-table {
   width: 100%;
-
   min-width: 950px;
-
   border-collapse: collapse;
-}
-
-.payroll-table thead {
-  background: #f8f9fa;
 }
 
 .payroll-table th {
   padding: 14px 16px;
-
-  text-align: left;
-
+  background: #f8f9fa;
   color: #657087;
-
   font-size: 12px;
   font-weight: 500;
-
-  white-space: nowrap;
+  text-align: left;
 }
 
 .payroll-table td {
   padding: 15px 16px;
-
   border-top: 1px solid #edf0f2;
-
   color: #344054;
-
   font-size: 13px;
-
   white-space: nowrap;
 }
 
-
-/* EMPLOYEE ID */
-
-.payroll-employee-id {
-  color: #697386 !important;
-
-  font-size: 11px !important;
-}
-
-
-/* EMPLOYEE NAME */
-
-.payroll-employee-name {
-  color: #15213a !important;
-
-  font-weight: 500;
-}
-
-
-/* =========================================
-   GROSS PAY BADGE
-========================================= */
-
 .gross-pay-badge {
   display: inline-block;
-
   padding: 4px 10px;
-
   border-radius: 5px;
-
   background: #d9f9e5;
-
   color: #00883e;
-
   font-size: 12px;
-  font-weight: 500;
 }
-
-
-/* =========================================
-   VIEW BUTTON
-========================================= */
 
 .view-payroll-btn {
   width: 30px;
   height: 30px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   border: none;
-
-  background: transparent;
-
-  color: #98a2b3;
-
-  cursor: pointer;
-
   border-radius: 5px;
+  background: transparent;
+  color: #98a2b3;
 }
 
 .view-payroll-btn:hover {
   background: #f2f4f7;
-
   color: #286b45;
 }
 
-
-/* =========================================
-   TABLE FOOTER
-========================================= */
-
 .payroll-table-footer {
   min-height: 42px;
-
-  padding: 0 16px;
-
   display: flex;
-  justify-content: space-between;
   align-items: center;
-
+  padding: 0 16px;
   border-top: 1px solid #edf0f2;
-
   color: #9299aa;
-
   font-size: 12px;
 }
 
-.payroll-table-footer strong {
-  color: #344054;
-}
-
-
-/* =========================================
-   PAYROLL MODAL
-========================================= */
-
 .payroll-modal-overlay {
   position: fixed;
-
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
+  inset: 0;
   z-index: 1000;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 20px;
-
   background: rgba(0, 0, 0, 0.35);
 }
 
 .payroll-modal {
   width: 100%;
   max-width: 430px;
-
   padding: 22px;
-
-  background: white;
-
   border-radius: 10px;
-
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
 }
 
 .payroll-modal-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-
   margin-bottom: 22px;
 }
 
 .payroll-modal-header h2 {
   margin: 0;
-
-  color: #172033;
-
   font-size: 20px;
 }
 
 .payroll-modal-header p {
   margin: 5px 0 0;
-
   color: #667085;
-
   font-size: 13px;
 }
 
 .payroll-modal-close {
-  width: 32px;
-  height: 32px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
   border: none;
-
   background: transparent;
-
   color: #667085;
-
-  cursor: pointer;
 }
-
-
-/* PAY DETAILS */
 
 .payroll-detail-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-
   padding: 13px 0;
-
   border-bottom: 1px solid #edf0f2;
-
   font-size: 13px;
 }
 
@@ -488,15 +273,9 @@
   color: #667085;
 }
 
-.payroll-detail-row strong {
-  color: #172033;
-}
-
 .payroll-detail-total {
   margin-top: 5px;
-
   border-bottom: none;
-
   font-size: 15px;
 }
 
@@ -504,66 +283,13 @@
   color: #00883e;
 }
 
-
-/* CLOSE MODAL */
-
 .payroll-modal-done {
   width: 100%;
   height: 40px;
-
   margin-top: 20px;
-
   border: none;
   border-radius: 5px;
-
   background: #286b45;
-
-  color: white;
-
-  font-size: 14px;
+  color: #ffffff;
   font-weight: 600;
-
-  cursor: pointer;
-}
-
-.payroll-modal-done:hover {
-  background: #205b3a;
-}
-
-
-/* =========================================
-   RESPONSIVE
-========================================= */
-
-@media (max-width: 800px) {
-  .payroll-filter-card {
-    flex-wrap: wrap;
-  }
-
-  .payroll-total-card {
-    width: 100%;
-  }
-}
-
-@media (max-width: 600px) {
-  .payroll-header h1 {
-    font-size: 22px;
-  }
-
-  .payroll-admin span {
-    display: none;
-  }
-
-  .payroll-filter-card {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .payroll-filter-field select {
-    width: 100%;
-  }
-
-  .generate-report-btn {
-    width: 100%;
-  }
 }

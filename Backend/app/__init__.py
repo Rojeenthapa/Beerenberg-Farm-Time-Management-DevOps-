@@ -1,8 +1,8 @@
 import os
 
 from flask import Flask
-from flask_cors import CORS
 
+from .extensions import cors
 from .extensions import db
 from .extensions import migrate
 
@@ -21,35 +21,29 @@ def create_app():
     app.config.from_mapping(
         SECRET_KEY=os.getenv(
             "SECRET_KEY",
-            "development-secret-change-before-deployment"
+            "change-this-secret-key"
         ),
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "DATABASE_URL",
-            (
-                "mysql+pymysql://root:"
-                "Parthiv%40admin@127.0.0.1:3306/"
-                "beerenberg_tms"
-            )
+            "mysql+pymysql://root:password@127.0.0.1:3306/beerenberg_tms"
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False
-    )
-
-    CORS(
-        app,
-        resources={
-            r"/api/*": {
-                "origins": [
-                    "http://127.0.0.1:5173",
-                    "http://localhost:5173"
-                ]
-            }
-        }
     )
 
     db.init_app(app)
     migrate.init_app(app, db)
 
+    cors.init_app(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": "*"
+            }
+        }
+    )
+
     from . import models
+
     from .routes import main_bp
 
     app.register_blueprint(

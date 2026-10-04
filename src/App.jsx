@@ -1,102 +1,188 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  Eye,
+  EyeOff,
+  Leaf,
+  LockKeyhole,
+  UserRound
+} from "lucide-react";
 
 import Dashboard from "./Pages/Dashboard";
 
+import {
+  apiRequest,
+  clearStoredUser,
+  getStoredUser
+} from "./api";
+
 import "./App.css";
 
-const API_URL = "/api";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = localStorage.getItem(
-      "currentUser"
-    );
+  const [currentUser, setCurrentUser] =
+    useState(() => getStoredUser());
 
-    return savedUser
-      ? JSON.parse(savedUser)
-      : null;
-  });
+  const [loginId, setLoginId] =
+    useState("");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [loginError, setLoginError] = useState("");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [password, setPassword] =
+    useState("");
 
-  const handleLogin = async (event) => {
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [rememberMe, setRememberMe] =
+    useState(true);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [checkingSession, setCheckingSession] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+
+  useEffect(() => {
+    const validateSession = async () => {
+      const storedUser = getStoredUser();
+
+      if (!storedUser) {
+        setCheckingSession(false);
+        return;
+      }
+
+      try {
+        const user = await apiRequest(
+          "/me"
+        );
+
+        setCurrentUser(user);
+
+      } catch {
+        clearStoredUser();
+        setCurrentUser(null);
+
+      } finally {
+        setCheckingSession(false);
+      }
+    };
+
+    validateSession();
+  }, []);
+
+
+  const handleLogin = async (
+    event
+  ) => {
     event.preventDefault();
 
-    setLoginError("");
+    setError("");
 
-    if (!email.trim() || !password) {
-      setLoginError(
-        "Please enter your email and password."
+    const cleanLoginId = loginId.trim();
+
+    if (!cleanLoginId) {
+      setError(
+        "Please enter your user ID."
       );
+
       return;
     }
 
-    setIsLoggingIn(true);
+    if (!password) {
+      setError(
+        "Please enter your password."
+      );
+
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const response = await fetch(
-        `${API_URL}/login`,
+      const response = await apiRequest(
+        "/login",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
           body: JSON.stringify({
-            email: email.trim().toLowerCase(),
+            login_id: cleanLoginId,
             password
           })
         }
       );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error || "Login failed."
-        );
-      }
-
-      setCurrentUser(data.user);
-
       if (rememberMe) {
         localStorage.setItem(
           "currentUser",
-          JSON.stringify(data.user)
+          JSON.stringify(
+            response.user
+          )
         );
+
+        sessionStorage.removeItem(
+          "currentUser"
+        );
+
       } else {
         sessionStorage.setItem(
           "currentUser",
-          JSON.stringify(data.user)
+          JSON.stringify(
+            response.user
+          )
+        );
+
+        localStorage.removeItem(
+          "currentUser"
         );
       }
 
-    } catch (error) {
-      setLoginError(error.message);
+      setCurrentUser(
+        response.user
+      );
+
+      setPassword("");
+
+    } catch (requestError) {
+      setError(
+        requestError.message ||
+        "Unable to sign in."
+      );
+
     } finally {
-      setIsLoggingIn(false);
+      setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem(
-      "currentUser"
-    );
 
-    sessionStorage.removeItem(
-      "currentUser"
-    );
+  const handleLogout = () => {
+    clearStoredUser();
 
     setCurrentUser(null);
-    setEmail("");
+    setLoginId("");
     setPassword("");
-    setLoginError("");
+    setError("");
   };
+
+
+  if (checkingSession) {
+    return (
+      <main className="loading-page">
+        <div className="loading-card">
+          <Leaf size={28} />
+
+          <span>
+            Loading Farm Time...
+          </span>
+        </div>
+      </main>
+    );
+  }
+
 
   if (currentUser) {
     return (
@@ -107,149 +193,196 @@ function App() {
     );
   }
 
+
   return (
-    <div className="login-page">
-      <main className="main-content">
-        <div className="background-overlay"></div>
-
-        <section className="login-card">
-          <div className="login-logo">
-            <span>🌱</span>
+    <main className="auth-page">
+      <section className="auth-card">
+        <div className="auth-brand">
+          <div className="auth-brand-icon">
+            <Leaf size={25} />
           </div>
 
-          <h2>Farm Time</h2>
+          <div>
+            <h1>
+              Farm Time
+            </h1>
 
-          <p className="system-title">
-            Management System
+            <span>
+              Management System
+            </span>
+          </div>
+        </div>
+
+        <div className="auth-heading">
+          <h2>
+            Welcome back!
+          </h2>
+
+          <p>
+            Login to your account
           </p>
+        </div>
 
-          <div className="welcome">
-            <h3>Welcome back!</h3>
-
-            <p>
-              Login to your account
-            </p>
+        {error && (
+          <div className="auth-error">
+            {error}
           </div>
+        )}
 
-          <form onSubmit={handleLogin}>
-            <div className="input-wrapper">
-              <span className="input-icon">
-                ✉
-              </span>
+        <form
+          className="auth-form"
+          onSubmit={handleLogin}
+        >
+          <div className="auth-field">
+            <label htmlFor="loginId">
+              User ID
+            </label>
+
+            <div className="auth-input-wrapper">
+              <UserRound
+                size={17}
+                className="auth-input-icon"
+              />
 
               <input
-                type="email"
-                placeholder="Email address"
-                value={email}
+                id="loginId"
+                name="login_id"
+                type="text"
+                value={loginId}
+                placeholder="Enter your user ID"
+                autoComplete="username"
+                disabled={loading}
                 onChange={(event) => {
-                  setEmail(event.target.value);
+                  setLoginId(
+                    event.target.value
+                  );
                 }}
-                autoComplete="email"
-                required
               />
             </div>
+          </div>
 
-            <div className="input-wrapper">
-              <span className="input-icon">
-                🔒
-              </span>
+          <div className="auth-field">
+            <label htmlFor="password">
+              Password
+            </label>
+
+            <div className="auth-input-wrapper">
+              <LockKeyhole
+                size={17}
+                className="auth-input-icon"
+              />
 
               <input
+                id="password"
+                name="password"
                 type={
                   showPassword
                     ? "text"
                     : "password"
                 }
-                placeholder="Password"
                 value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                }}
+                placeholder="Enter your password"
                 autoComplete="current-password"
-                required
+                disabled={loading}
+                onChange={(event) => {
+                  setPassword(
+                    event.target.value
+                  );
+                }}
               />
 
               <button
                 type="button"
                 className="password-toggle"
+                aria-label={
+                  showPassword
+                    ? "Hide password"
+                    : "Show password"
+                }
+                disabled={loading}
                 onClick={() => {
                   setShowPassword(
                     (value) => !value
                   );
                 }}
               >
-                {showPassword
-                  ? "Hide"
-                  : "Show"}
+                {showPassword ? (
+                  <EyeOff size={17} />
+                ) : (
+                  <Eye size={17} />
+                )}
               </button>
             </div>
+          </div>
 
-            {loginError && (
-              <p className="login-error">
-                {loginError}
-              </p>
-            )}
-
-            <div className="form-options">
-              <label className="remember">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(event) => {
-                    setRememberMe(
-                      event.target.checked
-                    );
-                  }}
-                />
-
-                <span>
-                  Remember me
-                </span>
-              </label>
-
-              <button
-                type="button"
-                className="forgot-link"
-                onClick={() => {
-                  setLoginError(
-                    "Contact an administrator to reset your password."
+          <div className="auth-options">
+            <label className="remember-option">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                disabled={loading}
+                onChange={(event) => {
+                  setRememberMe(
+                    event.target.checked
                   );
                 }}
-              >
-                Forgot Password?
-              </button>
-            </div>
+              />
+
+              <span>
+                Remember me
+              </span>
+            </label>
 
             <button
-              type="submit"
-              className="login-button"
-              disabled={isLoggingIn}
+              type="button"
+              className="forgot-password"
+              disabled={loading}
+              onClick={() => {
+                setError(
+                  "Please contact your administrator to reset your password."
+                );
+              }}
             >
-              {isLoggingIn
-                ? "Signing in..."
-                : "Login"}
+              Forgot password?
             </button>
-          </form>
+          </div>
 
-          <p className="signup-text">
-            Admin and staff access
-          </p>
-        </section>
+          <button
+            type="submit"
+            className="auth-submit-button"
+            disabled={loading}
+          >
+            {loading
+              ? "Signing in..."
+              : "Login"}
+          </button>
+        </form>
 
-        <button
-          className="help-button"
-          type="button"
-          onClick={() => {
-            window.alert(
-              "Contact your administrator for help."
-            );
-          }}
-        >
-          ?
-        </button>
-      </main>
-    </div>
+        <div className="auth-signup">
+          <span>
+            Don't have an account?
+          </span>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              setError(
+                "Please contact your administrator to create an account."
+              );
+            }}
+          >
+            Sign up
+          </button>
+        </div>
+
+        <p className="auth-footer">
+          © 2026 Farm Time Management System
+        </p>
+      </section>
+    </main>
   );
 }
+
 
 export default App;

@@ -1,10 +1,10 @@
 import {
   useEffect,
-  useMemo,
   useState
 } from "react";
 
 import {
+  KeyRound,
   Pencil,
   Plus,
   Search,
@@ -13,69 +13,90 @@ import {
 } from "lucide-react";
 
 import {
-  apiRequest,
-  getStoredUser
+  apiRequest
 } from "../api";
 
 import "../styles/Employees.css";
 
 
-const EMPTY_EMPLOYEE = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone: "",
-  role: "",
-  contract_type: "Full Time",
-  standard_hours: "38",
-  pay_rate: "",
-  overtime_pay_rate: "",
-  status: "Active",
-  hire_date: ""
-};
-
-
-function Employees() {
-  const currentUser = getStoredUser();
-
-  const isAdmin = Boolean(
-    currentUser?.is_admin
-  );
-
+function Employees({
+  currentUser
+}) {
   const [employees, setEmployees] =
     useState([]);
 
   const [search, setSearch] =
     useState("");
 
-  const [showModal, setShowModal] =
-    useState(false);
-
-  const [editingEmployeeId, setEditingEmployeeId] =
-    useState(null);
-
-  const [form, setForm] =
-    useState(EMPTY_EMPLOYEE);
-
   const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
     useState(false);
-
-  const [deletingId, setDeletingId] =
-    useState(null);
 
   const [error, setError] =
     useState("");
 
+  const [message, setMessage] =
+    useState("");
 
-  const loadEmployees = async () => {
-    if (!isAdmin) {
-      setLoading(false);
-      return;
+  const [showEmployeeModal, setShowEmployeeModal] =
+    useState(false);
+
+  const [showLoginModal, setShowLoginModal] =
+    useState(false);
+
+  const [editingEmployee, setEditingEmployee] =
+    useState(null);
+
+  const [loginEmployee, setLoginEmployee] =
+    useState(null);
+
+
+  const emptyEmployeeForm = {
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    employee_role: "",
+    contract_type: "Full Time",
+    standard_hours: "38",
+    pay_rate: "",
+    overtime_pay_rate: "",
+    hire_date: "",
+    status: "Active",
+    user_id: "",
+    password: "",
+    role: "Staff"
+  };
+
+
+  const [employeeForm, setEmployeeForm] =
+    useState(
+      emptyEmployeeForm
+    );
+
+
+  const [loginForm, setLoginForm] =
+    useState({
+      user_id: "",
+      password: "",
+      role: "Staff"
+    });
+
+
+  const isAdmin = Boolean(
+    currentUser?.is_admin
+  );
+
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadEmployees();
     }
+  }, [
+    isAdmin
+  ]);
 
+
+  async function loadEmployees() {
     setLoading(true);
     setError("");
 
@@ -84,179 +105,387 @@ function Employees() {
         "/employees"
       );
 
-      const employeeList = Array.isArray(
-        response
-      )
-        ? response
-        : response.employees || [];
-
-      setEmployees(employeeList);
+      setEmployees(
+        Array.isArray(response)
+          ? response
+          : []
+      );
 
     } catch (requestError) {
       setError(
         requestError.message
       );
+
     } finally {
       setLoading(false);
     }
-  };
+  }
 
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
-
-  const filteredEmployees = useMemo(() => {
-    const searchText = search
+  function getPreviewEmployeeId() {
+    const lastName = employeeForm.last_name
       .trim()
-      .toLowerCase();
+      .slice(0, 3)
+      .toUpperCase();
 
-    if (!searchText) {
-      return employees;
+    const hireDate = employeeForm.hire_date;
+
+    if (
+      lastName.length === 0 ||
+      !hireDate ||
+      hireDate.length < 10
+    ) {
+      return "Generated automatically";
     }
 
-    return employees.filter((employee) => {
-      const fullName = [
-        employee.first_name,
-        employee.last_name
-      ].join(" ");
+    const joiningDay = hireDate.slice(
+      8,
+      10
+    );
 
-      return [
-        employee.display_id,
-        employee.employee_id,
-        fullName,
-        employee.email,
-        employee.role,
-        employee.contract_type,
-        employee.status
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(searchText);
-    });
-  }, [
-    employees,
-    search
-  ]);
+    const joiningMonth = hireDate.slice(
+      5,
+      7
+    );
+
+    return (
+      `${lastName}` +
+      `${joiningDay}` +
+      `${joiningMonth}`
+    );
+  }
 
 
-  const handleInputChange = (event) => {
+  function handleEmployeeFormChange(
+    event
+  ) {
     const {
       name,
       value
     } = event.target;
 
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value
-    }));
-  };
-
-
-  const openAddModal = () => {
-    setEditingEmployeeId(null);
-
-    setForm({
-      ...EMPTY_EMPLOYEE,
-      hire_date: new Date()
-        .toISOString()
-        .slice(0, 10)
-    });
-
-    setError("");
-    setShowModal(true);
-  };
-
-
-  const openEditModal = (employee) => {
-    setEditingEmployeeId(
-      employee.employee_id
+    setEmployeeForm(
+      (previousForm) => ({
+        ...previousForm,
+        [name]: value
+      })
     );
+  }
 
-    setForm({
+
+  function handleLoginFormChange(
+    event
+  ) {
+    const {
+      name,
+      value
+    } = event.target;
+
+    setLoginForm(
+      (previousForm) => ({
+        ...previousForm,
+        [name]: value
+      })
+    );
+  }
+
+
+  function openCreateEmployeeModal() {
+    setEditingEmployee(null);
+    setEmployeeForm(
+      emptyEmployeeForm
+    );
+    setError("");
+    setMessage("");
+    setShowEmployeeModal(true);
+  }
+
+
+  function openEditEmployeeModal(
+    employee
+  ) {
+    setEditingEmployee(employee);
+
+    setEmployeeForm({
       first_name: employee.first_name || "",
       last_name: employee.last_name || "",
       email: employee.email || "",
       phone: employee.phone || "",
-      role: employee.role || "",
+      employee_role: employee.role || "",
       contract_type:
         employee.contract_type ||
         "Full Time",
-      standard_hours:
-        employee.standard_hours ?? "",
-      pay_rate:
-        employee.pay_rate ?? "",
-      overtime_pay_rate:
-        employee.overtime_pay_rate ?? "",
-      status:
-        employee.status || "Active",
-      hire_date:
-        employee.hire_date || ""
+      standard_hours: String(
+        employee.standard_hours || 38
+      ),
+      pay_rate: String(
+        employee.pay_rate || ""
+      ),
+      overtime_pay_rate: String(
+        employee.overtime_pay_rate || ""
+      ),
+      hire_date: employee.hire_date || "",
+      status: employee.status || "Active",
+      user_id: employee.login_id || "",
+      password: "",
+      role: employee.login_role || "Staff"
     });
 
     setError("");
-    setShowModal(true);
-  };
+    setMessage("");
+    setShowEmployeeModal(true);
+  }
 
 
-  const closeModal = () => {
-    if (saving) {
+  function openCreateLoginModal(
+    employee
+  ) {
+    if (employee.has_login_account) {
       return;
     }
 
-    setShowModal(false);
-    setEditingEmployeeId(null);
-    setForm(EMPTY_EMPLOYEE);
+    setLoginEmployee(employee);
+
+    setLoginForm({
+      user_id: "",
+      password: "",
+      role: "Staff"
+    });
+
     setError("");
-  };
+    setMessage("");
+    setShowLoginModal(true);
+  }
 
 
-  const handleSubmit = async (event) => {
+  function closeEmployeeModal() {
+    setShowEmployeeModal(false);
+    setEditingEmployee(null);
+    setEmployeeForm(
+      emptyEmployeeForm
+    );
+  }
+
+
+  function closeLoginModal() {
+    setShowLoginModal(false);
+    setLoginEmployee(null);
+
+    setLoginForm({
+      user_id: "",
+      password: "",
+      role: "Staff"
+    });
+  }
+
+
+  async function handleEmployeeSubmit(
+    event
+  ) {
     event.preventDefault();
 
-    setSaving(true);
     setError("");
+    setMessage("");
 
-    const isEditing =
-      editingEmployeeId !== null;
+    if (
+      !editingEmployee &&
+      !employeeForm.password
+    ) {
+      setError(
+        "A password is required."
+      );
 
-    const endpoint = isEditing
-      ? `/employees/${editingEmployeeId}`
-      : "/employees";
+      return;
+    }
 
-    const payload = {
-      first_name: form.first_name.trim(),
-      last_name: form.last_name.trim(),
-      email: form.email.trim().toLowerCase(),
-      phone: form.phone.trim() || null,
-      role: form.role.trim(),
-      contract_type: form.contract_type,
-      standard_hours: Number(
-        form.standard_hours
-      ),
-      pay_rate: Number(
-        form.pay_rate
-      ),
-      overtime_pay_rate: Number(
-        form.overtime_pay_rate
-      ),
-      status: form.status,
-      hire_date: form.hire_date
-    };
+    if (
+      !editingEmployee &&
+      employeeForm.password.length < 8
+    ) {
+      setError(
+        "Password must contain at least 8 characters."
+      );
+
+      return;
+    }
+
+    if (
+      !editingEmployee &&
+      !employeeForm.user_id.trim()
+    ) {
+      setError(
+        "A login User ID is required."
+      );
+
+      return;
+    }
 
     try {
-      await apiRequest(
-        endpoint,
+      if (editingEmployee) {
+        await apiRequest(
+          `/employees/${editingEmployee.employee_id}`,
+          {
+            method: "PUT",
+            body: JSON.stringify({
+              first_name:
+                employeeForm.first_name,
+              last_name:
+                employeeForm.last_name,
+              email:
+                employeeForm.email,
+              phone:
+                employeeForm.phone,
+              role:
+                employeeForm.employee_role,
+              contract_type:
+                employeeForm.contract_type,
+              standard_hours: Number(
+                employeeForm.standard_hours
+              ),
+              pay_rate: Number(
+                employeeForm.pay_rate
+              ),
+              overtime_pay_rate: Number(
+                employeeForm.overtime_pay_rate
+              ),
+              hire_date:
+                employeeForm.hire_date,
+              status:
+                employeeForm.status
+            })
+          }
+        );
+
+        setMessage(
+          "Employee updated successfully."
+        );
+
+      } else {
+        const response = await apiRequest(
+          "/employees",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              first_name:
+                employeeForm.first_name,
+              last_name:
+                employeeForm.last_name,
+              email:
+                employeeForm.email,
+              phone:
+                employeeForm.phone,
+              employee_role:
+                employeeForm.employee_role,
+              contract_type:
+                employeeForm.contract_type,
+              standard_hours: Number(
+                employeeForm.standard_hours
+              ),
+              pay_rate: Number(
+                employeeForm.pay_rate
+              ),
+              overtime_pay_rate: Number(
+                employeeForm.overtime_pay_rate
+              ),
+              hire_date:
+                employeeForm.hire_date,
+              status:
+                employeeForm.status,
+              user_id:
+                employeeForm.user_id.trim(),
+              password:
+                employeeForm.password,
+              role:
+                employeeForm.role
+            })
+          }
+        );
+
+        setMessage(
+          `Employee created. Employee ID: ${
+            response.employee.employee_code
+          }. Login User ID: ${
+            response.user.login_id
+          }.`
+        );
+      }
+
+      closeEmployeeModal();
+      await loadEmployees();
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+    }
+  }
+
+
+  async function handleCreateLogin(
+    event
+  ) {
+    event.preventDefault();
+
+    if (!loginEmployee) {
+      return;
+    }
+
+    if (
+      loginEmployee.has_login_account
+    ) {
+      setError(
+        "This employee already has login credentials."
+      );
+
+      return;
+    }
+
+    if (
+      !loginForm.user_id.trim()
+    ) {
+      setError(
+        "A login User ID is required."
+      );
+
+      return;
+    }
+
+    if (
+      loginForm.password.length < 8
+    ) {
+      setError(
+        "Password must contain at least 8 characters."
+      );
+
+      return;
+    }
+
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await apiRequest(
+        `/employees/${loginEmployee.employee_id}/login-account`,
         {
-          method: isEditing
-            ? "PUT"
-            : "POST",
-          body: JSON.stringify(payload)
+          method: "POST",
+          body: JSON.stringify({
+            user_id:
+              loginForm.user_id.trim(),
+            password:
+              loginForm.password,
+            role:
+              loginForm.role
+          })
         }
       );
 
-      closeModal();
+      closeLoginModal();
+
+      setMessage(
+        `Login created for ${
+          response.user.login_id
+        }.`
+      );
 
       await loadEmployees();
 
@@ -264,23 +493,23 @@ function Employees() {
       setError(
         requestError.message
       );
-    } finally {
-      setSaving(false);
     }
-  };
+  }
 
 
-  const handleDelete = async (employeeId) => {
+  async function handleDelete(
+    employeeId
+  ) {
     const confirmed = window.confirm(
-      "Delete this employee and all related records?"
+      "Delete this employee and their login account?"
     );
 
     if (!confirmed) {
       return;
     }
 
-    setDeletingId(employeeId);
     setError("");
+    setMessage("");
 
     try {
       await apiRequest(
@@ -290,47 +519,54 @@ function Employees() {
         }
       );
 
+      setMessage(
+        "Employee deleted successfully."
+      );
+
       await loadEmployees();
 
     } catch (requestError) {
       setError(
         requestError.message
       );
-    } finally {
-      setDeletingId(null);
     }
-  };
+  }
 
 
-  const contractClassName = (
-    contractType
-  ) => {
-    return String(contractType)
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-  };
+  const filteredEmployees =
+    employees.filter((employee) => {
+      const searchText = search
+        .trim()
+        .toLowerCase();
 
+      const searchableText = [
+        employee.employee_code,
+        employee.display_id,
+        employee.login_id,
+        employee.user_id,
+        employee.first_name,
+        employee.last_name,
+        employee.email,
+        employee.role,
+        employee.contract_type,
+        employee.status
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-  const statusClassName = (
-    status
-  ) => {
-    return String(status)
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-  };
+      return searchableText.includes(
+        searchText
+      );
+    });
 
 
   if (!isAdmin) {
     return (
-      <section className="dashboard-content">
-        <h1>
-          Access Restricted
-        </h1>
-
-        <p className="page-description">
-          Only administrators can access
-          employee management.
-        </p>
+      <section className="employees-page">
+        <div className="page-error">
+          Administrator access is required.
+        </div>
       </section>
     );
   }
@@ -338,54 +574,67 @@ function Employees() {
 
   return (
     <section className="employees-page">
-      <div className="employees-header">
-        <h1>
-          Employees
-        </h1>
+      <div className="page-header">
+        <div>
+          <h1>
+            Employees
+          </h1>
+
+          <p>
+            Manage employees, employee IDs, and login credentials.
+          </p>
+        </div>
 
         <button
           type="button"
-          className="add-employee-btn"
-          onClick={openAddModal}
+          className="primary-button"
+          onClick={
+            openCreateEmployeeModal
+          }
         >
-          <Plus size={17} />
-
-          <span>
-            Add Employee
-          </span>
+          <Plus size={16} />
+          Add Employee
         </button>
       </div>
 
-      <section className="employees-card">
-        <div className="employees-search-section">
-          <div className="employees-search-box">
-            <Search size={16} />
-
-            <input
-              type="search"
-              placeholder="Search employees..."
-              value={search}
-              onChange={(event) => {
-                setSearch(
-                  event.target.value
-                );
-              }}
-            />
-          </div>
+      {error && (
+        <div className="page-error">
+          {error}
         </div>
+      )}
 
-        {error && (
-          <p className="employees-error">
-            {error}
-          </p>
-        )}
+      {message && (
+        <div className="page-success">
+          {message}
+        </div>
+      )}
 
-        <div className="employees-table-wrapper">
-          <table className="employees-table">
+      <div className="search-card">
+        <Search size={17} />
+
+        <input
+          type="search"
+          value={search}
+          placeholder="Search employees, IDs, or login user IDs"
+          onChange={(event) => {
+            setSearch(
+              event.target.value
+            );
+          }}
+        />
+      </div>
+
+      <div className="data-card">
+        <div className="table-wrapper">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>
                   Employee ID
+                </th>
+
+                <th>
+                  Login User ID
                 </th>
 
                 <th>
@@ -397,11 +646,7 @@ function Employees() {
                 </th>
 
                 <th>
-                  Role
-                </th>
-
-                <th>
-                  Contract Type
+                  Position
                 </th>
 
                 <th>
@@ -409,7 +654,7 @@ function Employees() {
                 </th>
 
                 <th>
-                  Status
+                  Login Status
                 </th>
 
                 <th>
@@ -419,264 +664,274 @@ function Employees() {
             </thead>
 
             <tbody>
-              {loading && (
-                <tr>
-                  <td
-                    colSpan="8"
-                    className="no-employees"
+              {filteredEmployees.map(
+                (employee) => (
+                  <tr
+                    key={
+                      employee.employee_id
+                    }
                   >
-                    Loading employees...
-                  </td>
-                </tr>
-              )}
+                    <td>
+                      <span className="employee-code">
+                        {employee.employee_code ||
+                          employee.display_id ||
+                          "—"}
+                      </span>
+                    </td>
 
-              {!loading &&
-                filteredEmployees.map(
-                  (employee) => (
-                    <tr
-                      key={
-                        employee.employee_id
-                      }
-                    >
-                      <td className="employee-id">
-                        {employee.display_id ||
-                          employee.employee_id}
-                      </td>
+                    <td>
+                      {employee.login_id || "—"}
+                    </td>
 
-                      <td className="employee-name">
-                        {employee.first_name}{" "}
-                        {employee.last_name}
-                      </td>
+                    <td>
+                      {employee.first_name}{" "}
+                      {employee.last_name}
+                    </td>
 
-                      <td>
-                        {employee.email}
-                      </td>
+                    <td>
+                      {employee.email}
+                    </td>
 
-                      <td>
-                        {employee.role}
-                      </td>
+                    <td>
+                      {employee.role}
+                    </td>
 
-                      <td>
-                        <span
-                          className={
-                            "contract-badge " +
-                            contractClassName(
-                              employee.contract_type
-                            )
-                          }
-                        >
-                          {employee.contract_type}
+                    <td>
+                      $
+                      {Number(
+                        employee.pay_rate || 0
+                      ).toFixed(2)}
+                      /hr
+                    </td>
+
+                    <td>
+                      {employee.has_login_account ? (
+                        <span className="status-badge active">
+                          Login Created
                         </span>
-                      </td>
-
-                      <td>
-                        $
-                        {Number(
-                          employee.pay_rate || 0
-                        ).toFixed(2)}
-                        /hr
-                      </td>
-
-                      <td>
-                        <span
-                          className={
-                            "employee-status " +
-                            statusClassName(
-                              employee.status
-                            )
-                          }
+                      ) : (
+                        <button
+                          type="button"
+                          className="login-account-button"
+                          onClick={() => {
+                            openCreateLoginModal(
+                              employee
+                            );
+                          }}
                         >
-                          {employee.status}
-                        </span>
-                      </td>
+                          <KeyRound size={14} />
+                          Create Login
+                        </button>
+                      )}
+                    </td>
 
-                      <td>
-                        <div className="employee-actions">
-                          <button
-                            type="button"
-                            className="employee-action-btn"
-                            title="Edit employee"
-                            onClick={() => {
-                              openEditModal(
-                                employee
-                              );
-                            }}
-                          >
-                            <Pencil size={14} />
-                          </button>
+                    <td>
+                      <div className="row-actions">
+                        <button
+                          type="button"
+                          title="Edit employee"
+                          onClick={() => {
+                            openEditEmployeeModal(
+                              employee
+                            );
+                          }}
+                        >
+                          <Pencil size={15} />
+                        </button>
 
-                          <button
-                            type="button"
-                            className={
-                              "employee-action-btn delete"
-                            }
-                            title="Delete employee"
-                            disabled={
-                              deletingId ===
+                        <button
+                          type="button"
+                          title="Delete employee"
+                          onClick={() => {
+                            handleDelete(
                               employee.employee_id
-                            }
-                            onClick={() => {
-                              handleDelete(
-                                employee.employee_id
-                              );
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )}
+                            );
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              )}
 
               {!loading &&
                 filteredEmployees.length === 0 && (
                   <tr>
                     <td
                       colSpan="8"
-                      className="no-employees"
+                      className="empty-row"
                     >
-                      No employees found
+                      No employees found.
                     </td>
                   </tr>
                 )}
+
+              {loading && (
+                <tr>
+                  <td
+                    colSpan="8"
+                    className="empty-row"
+                  >
+                    Loading employees...
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
+      </div>
 
-        <div className="employees-footer">
-          Showing{" "}
-          {filteredEmployees.length} of{" "}
-          {employees.length} employees
-        </div>
-      </section>
+      {showEmployeeModal && (
+        <div className="modal-overlay">
+          <div className="modal-card employee-modal">
+            <div className="modal-header">
+              <div>
+                <h2>
+                  {editingEmployee
+                    ? "Edit Employee"
+                    : "Add Employee"}
+                </h2>
 
-      {showModal && (
-        <div
-          className="employee-modal-overlay"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              closeModal();
-            }
-          }}
-        >
-          <div
-            className="employee-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="employee-modal-title"
-          >
-            <div className="employee-modal-header">
-              <h2 id="employee-modal-title">
-                {editingEmployeeId !== null
-                  ? "Edit Employee"
-                  : "Add Employee"}
-              </h2>
+                <p className="modal-subtitle">
+                  {editingEmployee
+                    ? "Update employee details."
+                    : "Create an employee and their login account."}
+                </p>
+              </div>
 
               <button
                 type="button"
-                className="close-modal-btn"
-                onClick={closeModal}
-                disabled={saving}
+                onClick={
+                  closeEmployeeModal
+                }
               >
-                <X size={20} />
+                <X size={19} />
               </button>
             </div>
 
             <form
-              className="employee-form"
-              onSubmit={handleSubmit}
+              className="form-grid"
+              onSubmit={
+                handleEmployeeSubmit
+              }
             >
-              <div className="employee-form-grid">
-                <div className="employee-form-group">
-                  <label htmlFor="first_name">
-                    First Name
-                  </label>
-
-                  <input
-                    id="first_name"
-                    name="first_name"
-                    type="text"
-                    value={form.first_name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="employee-form-group">
-                  <label htmlFor="last_name">
-                    Last Name
-                  </label>
-
-                  <input
-                    id="last_name"
-                    name="last_name"
-                    type="text"
-                    value={form.last_name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="employee-form-group">
-                <label htmlFor="email">
-                  Email Address
-                </label>
-
+              <label>
+                First Name
                 <input
-                  id="email"
+                  name="first_name"
+                  value={
+                    employeeForm.first_name
+                  }
+                  required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Surname
+                <input
+                  name="last_name"
+                  value={
+                    employeeForm.last_name
+                  }
+                  required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Generated Employee ID
+                <input
+                  value={
+                    getPreviewEmployeeId()
+                  }
+                  readOnly
+                  disabled
+                />
+                <small className="field-help">
+                  First 3 surname letters + joining day + joining month.
+                </small>
+              </label>
+
+              <label>
+                Joining Date
+                <input
+                  name="hire_date"
+                  type="date"
+                  value={
+                    employeeForm.hire_date
+                  }
+                  required
+                  disabled={
+                    Boolean(
+                      editingEmployee
+                    )
+                  }
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Email
+                <input
                   name="email"
                   type="email"
-                  value={form.email}
-                  onChange={handleInputChange}
+                  value={
+                    employeeForm.email
+                  }
                   required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
                 />
-              </div>
+              </label>
 
-              <div className="employee-form-group">
-                <label htmlFor="phone">
-                  Phone
-                </label>
-
+              <label>
+                Phone
                 <input
-                  id="phone"
                   name="phone"
-                  type="text"
-                  value={form.phone}
-                  onChange={handleInputChange}
+                  value={
+                    employeeForm.phone
+                  }
+                  onChange={
+                    handleEmployeeFormChange
+                  }
                 />
-              </div>
+              </label>
 
-              <div className="employee-form-group">
-                <label htmlFor="role">
-                  Role
-                </label>
-
+              <label>
+                Employee Position
                 <input
-                  id="role"
-                  name="role"
-                  type="text"
-                  value={form.role}
-                  onChange={handleInputChange}
+                  name="employee_role"
+                  value={
+                    employeeForm.employee_role
+                  }
                   required
+                  placeholder="Field Supervisor"
+                  onChange={
+                    handleEmployeeFormChange
+                  }
                 />
-              </div>
+              </label>
 
-              <div className="employee-form-group">
-                <label htmlFor="contract_type">
-                  Contract Type
-                </label>
-
+              <label>
+                Contract Type
                 <select
-                  id="contract_type"
                   name="contract_type"
-                  value={form.contract_type}
-                  onChange={handleInputChange}
-                  required
+                  value={
+                    employeeForm.contract_type
+                  }
+                  onChange={
+                    handleEmployeeFormChange
+                  }
                 >
                   <option value="Full Time">
                     Full Time
@@ -689,125 +944,286 @@ function Employees() {
                   <option value="Casual">
                     Casual
                   </option>
-
-                  <option value="Seasonal">
-                    Seasonal
-                  </option>
                 </select>
-              </div>
+              </label>
 
-              <div className="employee-form-grid">
-                <div className="employee-form-group">
-                  <label htmlFor="standard_hours">
-                    Standard Hours
-                  </label>
-
-                  <input
-                    id="standard_hours"
-                    name="standard_hours"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.standard_hours}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-
-                <div className="employee-form-group">
-                  <label htmlFor="pay_rate">
-                    Pay Rate
-                  </label>
-
-                  <input
-                    id="pay_rate"
-                    name="pay_rate"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.pay_rate}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="employee-form-group">
-                <label htmlFor="overtime_pay_rate">
-                  Overtime Pay Rate
-                </label>
-
+              <label>
+                Standard Hours
                 <input
-                  id="overtime_pay_rate"
+                  name="standard_hours"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={
+                    employeeForm.standard_hours
+                  }
+                  required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Pay Rate
+                <input
+                  name="pay_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={
+                    employeeForm.pay_rate
+                  }
+                  required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Overtime Pay Rate
+                <input
                   name="overtime_pay_rate"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={form.overtime_pay_rate}
-                  onChange={handleInputChange}
+                  value={
+                    employeeForm.overtime_pay_rate
+                  }
                   required
+                  onChange={
+                    handleEmployeeFormChange
+                  }
                 />
-              </div>
+              </label>
 
-              <div className="employee-form-grid">
-                <div className="employee-form-group">
-                  <label htmlFor="status">
-                    Status
+              <label>
+                Status
+                <select
+                  name="status"
+                  value={
+                    employeeForm.status
+                  }
+                  onChange={
+                    handleEmployeeFormChange
+                  }
+                >
+                  <option value="Active">
+                    Active
+                  </option>
+
+                  <option value="Inactive">
+                    Inactive
+                  </option>
+                </select>
+              </label>
+
+              {!editingEmployee && (
+                <>
+                  <label>
+                    Login User ID
+                    <input
+                      name="user_id"
+                      value={
+                        employeeForm.user_id
+                      }
+                      required
+                      placeholder="Created by administrator"
+                      onChange={
+                        handleEmployeeFormChange
+                      }
+                    />
+                    <small className="field-help">
+                      This is what the employee enters at login.
+                    </small>
                   </label>
 
-                  <select
-                    id="status"
-                    name="status"
-                    value={form.status}
-                    onChange={handleInputChange}
-                    required
-                  >
-                    <option value="Active">
-                      Active
-                    </option>
+                  <label>
+                    Login Role
+                    <select
+                      name="role"
+                      value={
+                        employeeForm.role
+                      }
+                      onChange={
+                        handleEmployeeFormChange
+                      }
+                    >
+                      <option value="Staff">
+                        Staff
+                      </option>
 
-                    <option value="Inactive">
-                      Inactive
-                    </option>
-                  </select>
-                </div>
+                      <option value="User">
+                        User
+                      </option>
 
-                <div className="employee-form-group">
-                  <label htmlFor="hire_date">
-                    Hire Date
+                      <option value="Admin">
+                        Admin
+                      </option>
+                    </select>
                   </label>
 
-                  <input
-                    id="hire_date"
-                    name="hire_date"
-                    type="date"
-                    value={form.hire_date}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
-              </div>
+                  <label>
+                    Login Password
+                    <input
+                      name="password"
+                      type="password"
+                      minLength="8"
+                      value={
+                        employeeForm.password
+                      }
+                      required
+                      placeholder="Minimum 8 characters"
+                      onChange={
+                        handleEmployeeFormChange
+                      }
+                    />
+                  </label>
+                </>
+              )}
 
-              <div className="employee-modal-actions">
+              <div className="modal-actions">
                 <button
                   type="button"
-                  className="employee-cancel-btn"
-                  onClick={closeModal}
-                  disabled={saving}
+                  className="secondary-button"
+                  onClick={
+                    closeEmployeeModal
+                  }
                 >
                   Cancel
                 </button>
 
                 <button
                   type="submit"
-                  className="employee-save-btn"
-                  disabled={saving}
+                  className="primary-button"
                 >
-                  {saving
-                    ? "Saving..."
-                    : editingEmployeeId !== null
-                      ? "Save Changes"
-                      : "Add Employee"}
+                  {editingEmployee
+                    ? "Save Employee"
+                    : "Create Employee"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showLoginModal && loginEmployee && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <div>
+                <h2>
+                  Create Login Credentials
+                </h2>
+
+                <p className="modal-subtitle">
+                  {loginEmployee.first_name}{" "}
+                  {loginEmployee.last_name}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  closeLoginModal
+                }
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            <form
+              className="settings-form"
+              onSubmit={
+                handleCreateLogin
+              }
+            >
+              <label>
+                Employee ID
+                <input
+                  value={
+                    loginEmployee.employee_code ||
+                    loginEmployee.display_id ||
+                    ""
+                  }
+                  disabled
+                />
+              </label>
+
+              <label>
+                Login User ID
+                <input
+                  name="user_id"
+                  value={
+                    loginForm.user_id
+                  }
+                  required
+                  placeholder="Enter user ID"
+                  onChange={
+                    handleLoginFormChange
+                  }
+                />
+              </label>
+
+              <label>
+                Login Role
+                <select
+                  name="role"
+                  value={
+                    loginForm.role
+                  }
+                  onChange={
+                    handleLoginFormChange
+                  }
+                >
+                  <option value="Staff">
+                    Staff
+                  </option>
+
+                  <option value="User">
+                    User
+                  </option>
+
+                  <option value="Admin">
+                    Admin
+                  </option>
+                </select>
+              </label>
+
+              <label>
+                Password
+                <input
+                  name="password"
+                  type="password"
+                  minLength="8"
+                  value={
+                    loginForm.password
+                  }
+                  required
+                  placeholder="Minimum 8 characters"
+                  onChange={
+                    handleLoginFormChange
+                  }
+                />
+              </label>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={
+                    closeLoginModal
+                  }
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                >
+                  Create Login
                 </button>
               </div>
             </form>
@@ -817,5 +1233,6 @@ function Employees() {
     </section>
   );
 }
+
 
 export default Employees;

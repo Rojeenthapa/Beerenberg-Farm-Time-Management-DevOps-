@@ -1,30 +1,31 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
 import {
+  AlertTriangle,
   CalendarDays,
-  CircleCheck,
+  CheckCircle2,
   Clock3,
   CreditCard,
   FileText,
   LayoutDashboard,
-  Leaf,
   LogOut,
-  Settings as SettingsIcon,
-  Sprout,
-  UserRound,
+  Settings,
   Users
 } from "lucide-react";
-
-import Employees from "./Employees";
-import ClockInOut from "./ClockInOut";
-import HoursReporting from "./HoursReporting";
-import Roster from "./Roster";
-import Payroll from "./Payroll";
-import Settings from "./Settings";
 
 import {
   apiRequest
 } from "../api";
+
+import Employees from "./Employees";
+import ClockInOut from "./ClockInOut";
+import HoursReporting from "./HoursReporting";
+import Payroll from "./Payroll";
+import Roster from "./Roster";
+import SettingsPage from "./Settings";
 
 import "../styles/Dashboard.css";
 
@@ -37,38 +38,24 @@ function Dashboard({
     useState("Dashboard");
 
   const [dashboardData, setDashboardData] =
-    useState({
-      employeeCount: 0,
-      clockedInCount: 0,
-      totalHours: "0h 00m",
-      recentLogs: []
-    });
+    useState(null);
 
-  const [dashboardLoading, setDashboardLoading] =
-    useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [dashboardError, setDashboardError] =
+  const [error, setError] =
     useState("");
+
 
   const isAdmin = Boolean(
     currentUser?.is_admin
   );
 
-  const fullName = [
-    currentUser?.first_name,
-    currentUser?.last_name
-  ]
-    .filter(Boolean)
-    .join(" ");
 
-  const displayName =
-    fullName || "User";
-
-  const navigationItems = [
+  const allNavigationItems = [
     {
       label: "Dashboard",
-      icon: LayoutDashboard,
-      adminOnly: false
+      icon: LayoutDashboard
     },
     {
       label: "Employees",
@@ -77,18 +64,15 @@ function Dashboard({
     },
     {
       label: "Clock In/Out",
-      icon: Clock3,
-      adminOnly: false
+      icon: Clock3
     },
     {
       label: "Hours Reporting",
-      icon: FileText,
-      adminOnly: false
+      icon: FileText
     },
     {
       label: "Roster",
-      icon: CalendarDays,
-      adminOnly: false
+      icon: CalendarDays
     },
     {
       label: "Payroll",
@@ -97,541 +81,692 @@ function Dashboard({
     },
     {
       label: "Settings",
-      icon: SettingsIcon,
-      adminOnly: false
+      icon: Settings
     }
   ];
 
-  const visibleNavigationItems =
-    navigationItems.filter(
-      (item) =>
-        !item.adminOnly || isAdmin
-    );
 
-  const getDateRange = () => {
-    const today = new Date();
-
-    const fromDate = new Date();
-
-    fromDate.setDate(
-      today.getDate() - 13
-    );
-
-    return {
-      fromDate: fromDate
-        .toISOString()
-        .slice(0, 10),
-
-      toDate: today
-        .toISOString()
-        .slice(0, 10)
-    };
-  };
-
-  const loadDashboardData = async () => {
-    setDashboardLoading(true);
-    setDashboardError("");
-
-    try {
-      const today = new Date()
-        .toISOString()
-        .slice(0, 10);
-
-      const {
-        fromDate,
-        toDate
-      } = getDateRange();
-
-      const hoursResponse = await apiRequest(
-        `/hours?from_date=${fromDate}&to_date=${toDate}`
-      );
-
-      const timeLogsResponse = await apiRequest(
-        `/timelogs?date=${today}`
-      );
-
-      let employeeCount = 0;
-
-      if (isAdmin) {
-        const countResponse =
-          await apiRequest(
-            "/dashboard/employee-count"
-          );
-
-        employeeCount =
-          Number(
-            countResponse.employee_count
-          ) || 0;
+  const navigationItems =
+    allNavigationItems.filter((item) => {
+      if (item.adminOnly) {
+        return isAdmin;
       }
 
-      const clockedInCount =
-        timeLogsResponse.filter(
-          (timeLog) =>
-            timeLog.clock_out === null
-        ).length;
+      return true;
+    });
 
-      const recentLogs =
-        timeLogsResponse
-          .slice(0, 5)
-          .map((timeLog) => ({
-            ...timeLog,
-            employee_name:
-              isAdmin
-                ? timeLog.employee_name ||
-                  "Employee"
-                : displayName
-          }));
 
-      setDashboardData({
-        employeeCount,
-        clockedInCount,
-        totalHours:
-          hoursResponse.total_hours_display ||
-          "0h 00m",
-        recentLogs
-      });
-
-    } catch (requestError) {
-      setDashboardError(
-        requestError.message
-      );
-    } finally {
-      setDashboardLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (
-      activePage === "Dashboard" &&
-      currentUser
-    ) {
-      loadDashboardData();
-    }
-  }, [
-    activePage,
-    currentUser?.user_id,
-    isAdmin
-  ]);
-
-  const handlePageChange = (page) => {
-    const selectedPage =
-      navigationItems.find(
-        (item) => item.label === page
-      );
-
-    if (
-      selectedPage?.adminOnly &&
-      !isAdmin
-    ) {
-      setActivePage("Dashboard");
+  const loadAdminDashboard = async () => {
+    if (!isAdmin) {
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setError("");
+
+    try {
+      const [
+        employeeResponse,
+        payrollResponse,
+        exceptionResponse
+      ] = await Promise.all([
+        apiRequest(
+          "/dashboard/employee-count"
+        ),
+        apiRequest(
+          "/payroll?period_start=2026-09-21&period_end=2026-10-04"
+        ),
+        apiRequest(
+          "/compliance/exceptions?status=Open"
+        )
+      ]);
+
+      setDashboardData({
+        employeeCount:
+          employeeResponse.employee_count || 0,
+        payroll: payrollResponse,
+        openExceptions:
+          Array.isArray(
+            exceptionResponse
+          )
+            ? exceptionResponse.length
+            : 0
+      });
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const loadEmployeeDashboard = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const [
+        timeLogResponse,
+        shiftResponse,
+        hoursResponse
+      ] = await Promise.all([
+        apiRequest(
+          `/timelogs?employee_id=${currentUser.employee_id}`
+        ),
+        apiRequest(
+          `/shifts?employee_id=${currentUser.employee_id}`
+        ),
+        apiRequest(
+          `/hours?from_date=2026-09-21&to_date=2026-10-04&employee_id=${currentUser.employee_id}`
+        )
+      ]);
+
+      const timeLogs = Array.isArray(
+        timeLogResponse
+      )
+        ? timeLogResponse
+        : [];
+
+      const shifts = Array.isArray(
+        shiftResponse
+      )
+        ? shiftResponse
+        : [];
+
+      setDashboardData({
+        activeTimeLog:
+          timeLogs.find(
+            (log) => !log.clock_out
+          ) || null,
+        shifts: shifts.slice(0, 5),
+        hours: hoursResponse
+      });
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    if (isAdmin) {
+      loadAdminDashboard();
+    } else {
+      loadEmployeeDashboard();
+    }
+  }, [
+    isAdmin,
+    currentUser?.employee_id
+  ]);
+
+
+  const goToPage = (page) => {
     setActivePage(page);
   };
 
-  const formatClockTime = (value) => {
-    if (!value) {
-      return "—";
-    }
 
-    return new Date(value)
-      .toLocaleTimeString(
-        "en-AU",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        }
-      );
-  };
+  const renderAdminHome = () => {
+    const payroll = dashboardData?.payroll;
 
-  const DashboardHome = () => (
-    <div className="dashboard-home">
-      <header className="dashboard-top-header">
-        <h1>
-          Dashboard
-        </h1>
+    return (
+      <section className="dashboard-home">
+        <div className="dashboard-page-heading">
+          <div>
+            <h1>
+              Admin Dashboard
+            </h1>
 
-        <div className="dashboard-admin">
-          <span>
-            Welcome, {displayName}
-          </span>
+            <p>
+              Monitor staff, attendance, payroll, and compliance.
+            </p>
+          </div>
 
-          <div className="admin-circle">
-            <UserRound size={18} />
+          <div className="dashboard-user">
+            Welcome,{" "}
+            {currentUser?.first_name || "Administrator"}
           </div>
         </div>
-      </header>
 
-      {dashboardError && (
-        <div className="dashboard-error">
-          {dashboardError}
-        </div>
-      )}
+        {error && (
+          <div className="dashboard-error">
+            {error}
+          </div>
+        )}
 
-      <section
-        className={
-          isAdmin
-            ? "dashboard-top-cards"
-            : "dashboard-top-cards single-card"
-        }
-      >
-        {isAdmin && (
-          <div className="dashboard-summary-card">
-            <div className="summary-circle">
-              <Users size={21} />
+        <div className="dashboard-summary-grid">
+          <button
+            type="button"
+            className="dashboard-summary-card"
+            onClick={() => {
+              goToPage("Employees");
+            }}
+          >
+            <div className="dashboard-summary-icon">
+              <Users size={23} />
             </div>
 
-            <div className="summary-info">
-              <p>
-                Employees
-              </p>
+            <div>
+              <span>
+                Active employees
+              </span>
 
-              <h2>
-                {dashboardLoading
-                  ? "..."
-                  : dashboardData.employeeCount}
-              </h2>
+              <strong>
+                {loading
+                  ? "Loading..."
+                  : dashboardData?.employeeCount || 0}
+              </strong>
+
+              <small>
+                Manage employee records
+              </small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-summary-card"
+            onClick={() => {
+              goToPage("Hours Reporting");
+            }}
+          >
+            <div className="dashboard-summary-icon">
+              <Clock3 size={23} />
+            </div>
+
+            <div>
+              <span>
+                Total hours
+              </span>
+
+              <strong>
+                {loading
+                  ? "Loading..."
+                  : payroll?.total_hours_display || "0h 00m"}
+              </strong>
+
+              <small>
+                Current payroll period
+              </small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-summary-card"
+            onClick={() => {
+              goToPage("Payroll");
+            }}
+          >
+            <div className="dashboard-summary-icon">
+              <CreditCard size={23} />
+            </div>
+
+            <div>
+              <span>
+                Gross payroll
+              </span>
+
+              <strong>
+                {loading
+                  ? "Loading..."
+                  : payroll?.total_gross_pay_display || "$0.00"}
+              </strong>
+
+              <small>
+                View payroll summary
+              </small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-summary-card warning-card"
+            onClick={() => {
+              goToPage("Settings");
+            }}
+          >
+            <div className="dashboard-summary-icon warning-icon">
+              <AlertTriangle size={23} />
+            </div>
+
+            <div>
+              <span>
+                Open exceptions
+              </span>
+
+              <strong>
+                {loading
+                  ? "Loading..."
+                  : dashboardData?.openExceptions || 0}
+              </strong>
+
+              <small>
+                Review compliance issues
+              </small>
+            </div>
+          </button>
+        </div>
+
+        <div className="dashboard-panel-grid">
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <h2>
+                  Admin actions
+                </h2>
+
+                <p>
+                  Common management tasks.
+                </p>
+              </div>
+            </div>
+
+            <div className="dashboard-action-grid">
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Employees");
+                }}
+              >
+                <Users size={19} />
+                Manage Employees
+              </button>
 
               <button
                 type="button"
                 onClick={() => {
-                  handlePageChange(
-                    "Employees"
-                  );
+                  goToPage("Roster");
                 }}
               >
-                View employees
+                <CalendarDays size={19} />
+                Manage Roster
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Payroll");
+                }}
+              >
+                <CreditCard size={19} />
+                Generate Payroll
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Hours Reporting");
+                }}
+              >
+                <FileText size={19} />
+                Review Hours
               </button>
             </div>
+          </section>
+
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <h2>
+                  Payroll period
+                </h2>
+
+                <p>
+                  21 September 2026 – 4 October 2026
+                </p>
+              </div>
+
+              <CheckCircle2
+                size={22}
+                className="success-icon"
+              />
+            </div>
+
+            <div className="dashboard-payroll-info">
+              <div>
+                <span>
+                  Employees included
+                </span>
+
+                <strong>
+                  {payroll?.employees?.length || 0}
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Total payroll
+                </span>
+
+                <strong>
+                  {payroll?.total_gross_pay_display || "$0.00"}
+                </strong>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+    );
+  };
+
+
+  const renderEmployeeHome = () => {
+    const activeTimeLog =
+      dashboardData?.activeTimeLog;
+
+    const shifts =
+      dashboardData?.shifts || [];
+
+    const hours =
+      dashboardData?.hours;
+
+    return (
+      <section className="dashboard-home">
+        <div className="dashboard-page-heading">
+          <div>
+            <h1>
+              My Dashboard
+            </h1>
+
+            <p>
+              View your attendance, roster, and work hours.
+            </p>
+          </div>
+
+          <div className="dashboard-user">
+            Welcome,{" "}
+            {currentUser?.first_name || "Employee"}
+          </div>
+        </div>
+
+        {error && (
+          <div className="dashboard-error">
+            {error}
           </div>
         )}
 
-        <div className="dashboard-summary-card">
-          <div className="summary-circle">
-            <Clock3 size={21} />
-          </div>
-
-          <div className="summary-info">
-            <p>
-              Clocked In Now
-            </p>
-
-            <h2>
-              {dashboardLoading
-                ? "..."
-                : dashboardData.clockedInCount}
-            </h2>
-
-            <button
-              type="button"
-              onClick={() => {
-                handlePageChange(
-                  "Clock In/Out"
-                );
-              }}
-            >
-              View clocking
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="dashboard-middle">
-        <div className="dashboard-panel clocked-panel">
-          <div className="dashboard-panel-heading">
-            <h3>
-              Hours This Period
-            </h3>
-
-            <button
-              type="button"
-              onClick={() => {
-                handlePageChange(
-                  "Hours Reporting"
-                );
-              }}
-            >
-              View report
-            </button>
-          </div>
-
-          <div className="clocked-content">
-            <div className="clocked-icon">
-              <Clock3 size={25} />
+        <div className="dashboard-summary-grid employee-summary-grid">
+          <button
+            type="button"
+            className="dashboard-summary-card"
+            onClick={() => {
+              goToPage("Clock In/Out");
+            }}
+          >
+            <div className="dashboard-summary-icon">
+              <Clock3 size={23} />
             </div>
 
             <div>
-              <h2>
-                {dashboardLoading
-                  ? "..."
-                  : dashboardData.totalHours}
-              </h2>
-
-              <p>
-                Total recorded worked hours
-              </p>
-
               <span>
-                Last 14 days
+                Attendance status
               </span>
+
+              <strong>
+                {activeTimeLog
+                  ? "Clocked in"
+                  : "Clocked out"}
+              </strong>
+
+              <small>
+                Open attendance page
+              </small>
             </div>
-          </div>
-        </div>
-
-        <div className="dashboard-panel schedules-panel">
-          <div className="dashboard-panel-heading schedules-heading">
-            <h3>
-              Quick Actions
-            </h3>
-          </div>
-
-          <div className="dashboard-schedule-row">
-            <div className="schedule-circle">
-              <Sprout size={17} />
-            </div>
-
-            <div>
-              <h4>
-                Clock In / Clock Out
-              </h4>
-
-              <p>
-                Record employee attendance
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="dashboard-row-action"
-              onClick={() => {
-                handlePageChange(
-                  "Clock In/Out"
-                );
-              }}
-            >
-              Open
-            </button>
-          </div>
-
-          <div className="dashboard-schedule-row">
-            <div className="schedule-circle">
-              <CalendarDays size={17} />
-            </div>
-
-            <div>
-              <h4>
-                Roster
-              </h4>
-
-              <p>
-                View upcoming shifts
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="dashboard-row-action"
-              onClick={() => {
-                handlePageChange(
-                  "Roster"
-                );
-              }}
-            >
-              Open
-            </button>
-          </div>
-
-          <div className="dashboard-schedule-row">
-            <div className="schedule-circle">
-              <CircleCheck size={17} />
-            </div>
-
-            <div>
-              <h4>
-                Settings
-              </h4>
-
-              <p>
-                Manage your account
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="dashboard-row-action"
-              onClick={() => {
-                handlePageChange(
-                  "Settings"
-                );
-              }}
-            >
-              Open
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="dashboard-panel recent-events">
-        <div className="dashboard-panel-heading recent-heading">
-          <h3>
-            Recent Clock Events
-          </h3>
+          </button>
 
           <button
             type="button"
+            className="dashboard-summary-card"
             onClick={() => {
-              handlePageChange(
-                "Clock In/Out"
-              );
+              goToPage("Hours Reporting");
             }}
           >
-            View all
+            <div className="dashboard-summary-icon">
+              <FileText size={23} />
+            </div>
+
+            <div>
+              <span>
+                Current hours
+              </span>
+
+              <strong>
+                {hours?.total_hours_display || "0h 00m"}
+              </strong>
+
+              <small>
+                Review this pay period
+              </small>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-summary-card"
+            onClick={() => {
+              goToPage("Roster");
+            }}
+          >
+            <div className="dashboard-summary-icon">
+              <CalendarDays size={23} />
+            </div>
+
+            <div>
+              <span>
+                Upcoming shifts
+              </span>
+
+              <strong>
+                {shifts.length}
+              </strong>
+
+              <small>
+                View your roster
+              </small>
+            </div>
           </button>
         </div>
 
-        <div className="dashboard-table-wrapper">
-          <table className="dashboard-table">
-            <thead>
-              <tr>
-                <th>
-                  Employee
-                </th>
+        <div className="dashboard-panel-grid">
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <h2>
+                  Quick actions
+                </h2>
 
-                <th>
-                  Type
-                </th>
+                <p>
+                  Manage your working day.
+                </p>
+              </div>
+            </div>
 
-                <th>
-                  Time
-                </th>
+            <div className="dashboard-action-grid">
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Clock In/Out");
+                }}
+              >
+                <Clock3 size={19} />
+                Clock In / Out
+              </button>
 
-                <th>
-                  Date
-                </th>
-              </tr>
-            </thead>
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Roster");
+                }}
+              >
+                <CalendarDays size={19} />
+                View Roster
+              </button>
 
-            <tbody>
-              {dashboardData.recentLogs.map(
-                (timeLog) => (
-                  <tr
-                    key={
-                      timeLog.timelog_id
-                    }
-                  >
-                    <td>
-                      {timeLog.employee_name}
-                    </td>
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Hours Reporting");
+                }}
+              >
+                <FileText size={19} />
+                View My Hours
+              </button>
 
-                    <td>
-                      <span className="clock-status clock-in">
-                        Clock In
-                      </span>
+              <button
+                type="button"
+                onClick={() => {
+                  goToPage("Settings");
+                }}
+              >
+                <Settings size={19} />
+                Account Settings
+              </button>
+            </div>
+          </section>
 
-                      {timeLog.clock_out && (
-                        <>
-                          {" "}
-                          <span className="clock-status clock-out">
-                            Clock Out
-                          </span>
-                        </>
-                      )}
-                    </td>
+          <section className="dashboard-panel">
+            <div className="dashboard-panel-heading">
+              <div>
+                <h2>
+                  Upcoming shifts
+                </h2>
 
-                    <td className="clock-time">
-                      {formatClockTime(
-                        timeLog.clock_in
-                      )}
-                    </td>
+                <p>
+                  Your scheduled work.
+                </p>
+              </div>
+            </div>
 
-                    <td>
-                      {timeLog.date}
-                    </td>
-                  </tr>
-                )
+            <div className="dashboard-shifts-list">
+              {shifts.length === 0 && (
+                <p className="dashboard-empty">
+                  No upcoming shifts found.
+                </p>
               )}
 
-              {!dashboardLoading &&
-                dashboardData.recentLogs.length ===
-                  0 && (
-                  <tr>
-                    <td
-                      colSpan="4"
-                      className="dashboard-empty"
-                    >
-                      No clock events today.
-                    </td>
-                  </tr>
-                )}
-            </tbody>
-          </table>
+              {shifts.map((shift) => (
+                <div
+                  className="dashboard-shift-row"
+                  key={shift.shift_id}
+                >
+                  <CalendarDays size={17} />
+
+                  <div>
+                    <strong>
+                      {shift.date}
+                    </strong>
+
+                    <span>
+                      {shift.start_time}
+                      {" – "}
+                      {shift.end_time}
+                    </span>
+                  </div>
+
+                  <small>
+                    {shift.status}
+                  </small>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
       </section>
-    </div>
-  );
+    );
+  };
 
-  const renderPage = () => {
-    if (activePage === "Dashboard") {
-      return (
-        <DashboardHome />
-      );
+
+  const renderHome = () => {
+    if (isAdmin) {
+      return renderAdminHome();
     }
 
+    return renderEmployeeHome();
+  };
+
+
+  const renderPage = () => {
     if (
       activePage === "Employees" &&
-      isAdmin
+      !isAdmin
     ) {
-      return (
-        <Employees />
-      );
+      return renderEmployeeHome();
     }
 
     if (
       activePage === "Payroll" &&
-      isAdmin
+      !isAdmin
     ) {
-      return (
-        <Payroll />
-      );
+      return renderEmployeeHome();
     }
 
-    if (activePage === "Clock In/Out") {
-      return (
-        <ClockInOut />
-      );
-    }
+    switch (activePage) {
+      case "Employees":
+        return (
+          <Employees
+            currentUser={currentUser}
+          />
+        );
 
-    if (activePage === "Hours Reporting") {
-      return (
-        <HoursReporting />
-      );
-    }
+      case "Clock In/Out":
+        return (
+          <ClockInOut
+            currentUser={currentUser}
+          />
+        );
 
-    if (activePage === "Roster") {
-      return (
-        <Roster />
-      );
-    }
+      case "Hours Reporting":
+        return (
+          <HoursReporting
+            currentUser={currentUser}
+          />
+        );
 
-    if (activePage === "Settings") {
-      return (
-        <Settings />
-      );
-    }
+      case "Roster":
+        return (
+          <Roster
+            currentUser={currentUser}
+          />
+        );
 
-    return (
-      <DashboardHome />
-    );
+      case "Payroll":
+        return (
+          <Payroll
+            currentUser={currentUser}
+          />
+        );
+
+      case "Settings":
+        return (
+          <SettingsPage
+            currentUser={currentUser}
+          />
+        );
+
+      default:
+        return renderHome();
+    }
   };
+
 
   return (
     <div className="dashboard-layout">
       <aside className="dashboard-sidebar">
         <div className="dashboard-logo">
           <div className="dashboard-logo-icon">
-            <Leaf size={22} />
+            <span>
+              🌿
+            </span>
           </div>
 
           <div>
@@ -646,7 +781,7 @@ function Dashboard({
         </div>
 
         <nav className="dashboard-nav">
-          {visibleNavigationItems.map(
+          {navigationItems.map(
             (item) => {
               const Icon = item.icon;
 
@@ -660,12 +795,12 @@ function Dashboard({
                       : "dashboard-nav-item"
                   }
                   onClick={() => {
-                    handlePageChange(
+                    setActivePage(
                       item.label
                     );
                   }}
                 >
-                  <Icon size={18} />
+                  <Icon size={17} />
 
                   <span>
                     {item.label}
@@ -681,7 +816,7 @@ function Dashboard({
           className="dashboard-nav-item dashboard-logout"
           onClick={onLogout}
         >
-          <LogOut size={18} />
+          <LogOut size={17} />
 
           <span>
             Logout
@@ -689,11 +824,12 @@ function Dashboard({
         </button>
       </aside>
 
-      <main className="dashboard-main-content">
+      <main className="dashboard-main">
         {renderPage()}
       </main>
     </div>
   );
 }
+
 
 export default Dashboard;

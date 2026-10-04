@@ -1,38 +1,60 @@
-const API_URL = "/api";
+const API_BASE_URL = "http://127.0.0.1:5000/api";
 
 
-function getStoredUser() {
-  const localUser =
-    localStorage.getItem(
-      "currentUser"
-    );
+export function getStoredUser() {
+  const localUser = localStorage.getItem(
+    "currentUser"
+  );
 
   if (localUser) {
-    return JSON.parse(localUser);
+    try {
+      return JSON.parse(localUser);
+
+    } catch {
+      localStorage.removeItem(
+        "currentUser"
+      );
+    }
   }
 
-  const sessionUser =
-    sessionStorage.getItem(
-      "currentUser"
-    );
+  const sessionUser = sessionStorage.getItem(
+    "currentUser"
+  );
 
   if (sessionUser) {
-    return JSON.parse(sessionUser);
+    try {
+      return JSON.parse(sessionUser);
+
+    } catch {
+      sessionStorage.removeItem(
+        "currentUser"
+      );
+    }
   }
 
   return null;
 }
 
 
-async function apiRequest(
-  path,
+export function clearStoredUser() {
+  localStorage.removeItem(
+    "currentUser"
+  );
+
+  sessionStorage.removeItem(
+    "currentUser"
+  );
+}
+
+
+export async function apiRequest(
+  endpoint,
   options = {}
 ) {
   const user = getStoredUser();
 
   const headers = {
     "Content-Type": "application/json",
-    "Accept": "application/json",
     ...(options.headers || {})
   };
 
@@ -43,48 +65,30 @@ async function apiRequest(
   }
 
   const response = await fetch(
-    `${API_URL}${path}`,
+    `${API_BASE_URL}${endpoint}`,
     {
       ...options,
       headers
     }
   );
 
-  const contentType =
-    response.headers.get(
-      "content-type"
-    ) || "";
+  const contentType = response.headers.get(
+    "content-type"
+  );
 
-  if (!contentType.includes(
+  const body = contentType?.includes(
     "application/json"
-  )) {
+  )
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
     throw new Error(
+      body?.error ||
+      body?.message ||
       "The server returned an unexpected response."
     );
   }
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error || "Request failed."
-    );
-  }
-
-  if (
-    path.startsWith("/employees") &&
-    !Array.isArray(data) &&
-    Array.isArray(data.employees)
-  ) {
-    return data.employees;
-  }
-
-  return data;
+  return body;
 }
-
-
-export {
-  API_URL,
-  apiRequest,
-  getStoredUser
-};

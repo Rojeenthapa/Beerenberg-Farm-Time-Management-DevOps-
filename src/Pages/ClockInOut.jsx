@@ -1,60 +1,47 @@
 import {
   useEffect,
-  useMemo,
   useState
 } from "react";
 
 import {
-  apiRequest,
-  getStoredUser
+  Clock3
+} from "lucide-react";
+
+import {
+  apiRequest
 } from "../api";
 
 import "../styles/ClockInOut.css";
 
-function ClockInOut() {
-  const currentUser = getStoredUser();
 
-  const isAdmin = Boolean(
-    currentUser?.is_admin
-  );
-
-  const [employees, setEmployees] =
-    useState([]);
-
-  const [selectedEmployeeId, setSelectedEmployeeId] =
-    useState(
-      currentUser?.employee_id
-        ? String(currentUser.employee_id)
-        : ""
-    );
+function ClockInOut({
+  currentUser
+}) {
+  const [currentTime, setCurrentTime] =
+    useState(new Date());
 
   const [timeLogs, setTimeLogs] =
     useState([]);
 
-  const [openTimeLog, setOpenTimeLog] =
+  const [activeLog, setActiveLog] =
     useState(null);
 
-  const [currentTime, setCurrentTime] =
-    useState(new Date());
-
-  const [station, setStation] =
-    useState("Packing Shed");
-
   const [loading, setLoading] =
-    useState(true);
-
-  const [saving, setSaving] =
     useState(false);
 
   const [error, setError] =
     useState("");
 
-  const [successMessage, setSuccessMessage] =
-    useState("");
+  const isAdmin = Boolean(
+    currentUser?.is_admin
+  );
+
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTime(new Date());
+      setCurrentTime(
+        new Date()
+      );
     }, 1000);
 
     return () => {
@@ -62,136 +49,103 @@ function ClockInOut() {
     };
   }, []);
 
-  const selectedEmployee = useMemo(() => {
-    return employees.find(
-      (employee) =>
-        String(employee.employee_id) ===
-        String(selectedEmployeeId)
-    );
-  }, [
-    employees,
-    selectedEmployeeId
-  ]);
 
-  const loadEmployee = async () => {
-    if (!currentUser?.employee_id) {
-      throw new Error(
-        "This account is not linked to an employee."
+  const loadTimeLogs = async () => {
+    setError("");
+
+    try {
+      const response = await apiRequest(
+        "/timelogs"
       );
-    }
 
-    const employee = await apiRequest(
-      `/employees/${currentUser.employee_id}`
-    );
+      const logs = Array.isArray(
+        response
+      )
+        ? response
+        : [];
 
-    setEmployees([
-      employee
-    ]);
+      setTimeLogs(logs);
 
-    setSelectedEmployeeId(
-      String(employee.employee_id)
-    );
-  };
+      setActiveLog(
+        logs.find(
+          (log) => !log.clock_out
+        ) || null
+      );
 
-  const loadEmployees = async () => {
-    const data = await apiRequest(
-      "/employees?status=Active"
-    );
-
-    setEmployees(data);
-
-    if (
-      data.length > 0 &&
-      !selectedEmployeeId
-    ) {
-      setSelectedEmployeeId(
-        String(data[0].employee_id)
+    } catch (requestError) {
+      setError(
+        requestError.message
       );
     }
   };
 
-  const loadTimeLogs = async (
-    employeeId
-  ) => {
-    if (!employeeId) {
-      setTimeLogs([]);
-      setOpenTimeLog(null);
-      return;
-    }
-
-    const today = new Date()
-      .toISOString()
-      .slice(0, 10);
-
-    const data = await apiRequest(
-      `/timelogs?employee_id=${employeeId}&date=${today}`
-    );
-
-    setTimeLogs(data);
-
-    const activeLog = data.find(
-      (timeLog) =>
-        timeLog.clock_out === null
-    );
-
-    setOpenTimeLog(activeLog || null);
-  };
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      setLoading(true);
-      setError("");
-
-      try {
-        if (isAdmin) {
-          await loadEmployees();
-        } else {
-          await loadEmployee();
-        }
-      } catch (requestError) {
-        setError(
-          requestError.message
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadInitialData();
+    loadTimeLogs();
   }, []);
 
-  useEffect(() => {
-    if (!selectedEmployeeId) {
+
+  const handleClockIn = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = {};
+
+      if (isAdmin) {
+        data.employee_id =
+          currentUser.employee_id;
+      }
+
+      await apiRequest(
+        "/timelogs/clock-in",
+        {
+          method: "POST",
+          body: JSON.stringify(data)
+        }
+      );
+
+      await loadTimeLogs();
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleClockOut = async () => {
+    if (!activeLog) {
       return;
     }
 
-    const refreshLogs = async () => {
-      try {
-        await loadTimeLogs(
-          selectedEmployeeId
-        );
-      } catch (requestError) {
-        setError(
-          requestError.message
-        );
-      }
-    };
+    setLoading(true);
+    setError("");
 
-    refreshLogs();
-  }, [
-    selectedEmployeeId
-  ]);
+    try {
+      await apiRequest(
+        `/timelogs/${activeLog.timelog_id}/clock-out`,
+        {
+          method: "POST"
+        }
+      );
 
-  const formattedTime =
-    currentTime.toLocaleTimeString(
-      "en-AU",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: true
-      }
-    );
+      await loadTimeLogs();
+
+    } catch (requestError) {
+      setError(
+        requestError.message
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const formattedDate =
     currentTime.toLocaleDateString(
@@ -204,263 +158,94 @@ function ClockInOut() {
       }
     );
 
-  const formatTime = (value) => {
-    if (!value) {
-      return "—";
-    }
-
-    return new Date(value)
-      .toLocaleTimeString(
-        "en-AU",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true
-        }
-      );
-  };
-
-  const handleClockAction = async () => {
-    if (!selectedEmployeeId) {
-      setError(
-        "No employee is selected."
-      );
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setSuccessMessage("");
-
-    try {
-      if (openTimeLog) {
-        await apiRequest(
-          `/timelogs/${openTimeLog.timelog_id}/clock-out`,
-          {
-            method: "POST"
-          }
-        );
-
-        setSuccessMessage(
-          "Clocked out successfully."
-        );
-      } else {
-        await apiRequest(
-          "/timelogs/clock-in",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              employee_id: Number(
-                selectedEmployeeId
-              )
-            })
-          }
-        );
-
-        setSuccessMessage(
-          "Clocked in successfully."
-        );
+  const formattedTime =
+    currentTime.toLocaleTimeString(
+      "en-AU",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
       }
-
-      await loadTimeLogs(
-        selectedEmployeeId
-      );
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <section className="clock-page">
-        <div className="page-header">
-          <h1>
-            Clock In / Clock Out
-          </h1>
-
-          <p>
-            Loading...
-          </p>
-        </div>
-      </section>
     );
-  }
+
 
   return (
     <section className="clock-page">
       <div className="page-header">
-        <h1>
-          Clock In / Clock Out
-        </h1>
+        <div>
+          <h1>
+            Clock In / Out
+          </h1>
 
-        <p>
-          {formattedDate}
-        </p>
+          <p>
+            Record employee attendance.
+          </p>
+        </div>
       </div>
 
       {error && (
-        <div className="clock-error">
+        <div className="page-error">
           {error}
         </div>
       )}
 
-      {successMessage && (
-        <div className="clock-success">
-          {successMessage}
+      <div className="clock-card">
+        <div className="clock-icon">
+          <Clock3 size={30} />
         </div>
-      )}
 
-      <section className="clock-card">
-        {isAdmin && (
-          <div className="employee-selector">
-            <label htmlFor="clock-employee">
-              Employee
-            </label>
+        <span className="clock-date">
+          {formattedDate}
+        </span>
 
-            <select
-              id="clock-employee"
-              value={selectedEmployeeId}
-              onChange={(event) => {
-                setSelectedEmployeeId(
-                  event.target.value
-                );
-              }}
-            >
-              {employees.map((employee) => (
-                <option
-                  key={employee.employee_id}
-                  value={employee.employee_id}
-                >
-                  {employee.display_id} —{" "}
-                  {employee.first_name}{" "}
-                  {employee.last_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <strong className="clock-time">
+          {formattedTime}
+        </strong>
 
-        {selectedEmployee && (
-          <>
-            <div className="employee-avatar">
-              {selectedEmployee.first_name
-                .charAt(0)
-                .toUpperCase()}
-              {selectedEmployee.last_name
-                .charAt(0)
-                .toUpperCase()}
-            </div>
+        <span className="clock-status">
+          {activeLog
+            ? "Currently clocked in"
+            : "Currently clocked out"}
+        </span>
 
-            <div className="employee-information">
-              <h2>
-                {selectedEmployee.first_name}{" "}
-                {selectedEmployee.last_name}
-              </h2>
+        <button
+          type="button"
+          className={
+            activeLog
+              ? "clock-button clock-out"
+              : "clock-button"
+          }
+          disabled={loading}
+          onClick={
+            activeLog
+              ? handleClockOut
+              : handleClockIn
+          }
+        >
+          {loading
+            ? "Saving..."
+            : activeLog
+              ? "Clock Out"
+              : "Clock In"}
+        </button>
+      </div>
 
-              <p className="employee-role">
-                {selectedEmployee.role}
-              </p>
+      <div className="data-card">
+        <div className="section-heading">
+          <h2>
+            Recent Time Logs
+          </h2>
+        </div>
 
-              <p>
-                Employee ID:{" "}
-                {selectedEmployee.display_id}
-              </p>
-            </div>
-
-            <div className="current-time">
-              {formattedTime}
-            </div>
-
-            <div className="status-container">
-              <span
-                className={
-                  openTimeLog
-                    ? "status active"
-                    : "status inactive"
-                }
-              >
-                {openTimeLog
-                  ? "Clocked In"
-                  : "Clocked Out"}
-              </span>
-
-              <span className="status compliance">
-                {currentUser?.role}
-              </span>
-            </div>
-
-            <div className="station-container">
-              <label htmlFor="station">
-                Station
-              </label>
-
-              <select
-                id="station"
-                value={station}
-                onChange={(event) => {
-                  setStation(
-                    event.target.value
-                  );
-                }}
-              >
-                <option value="Main Gate">
-                  Main Gate
-                </option>
-
-                <option value="Packing Shed">
-                  Packing Shed
-                </option>
-
-                <option value="Warehouse">
-                  Warehouse
-                </option>
-
-                <option value="Field Station">
-                  Field Station
-                </option>
-              </select>
-            </div>
-
-            <button
-              type="button"
-              className={
-                openTimeLog
-                  ? "clock-out-btn"
-                  : "clock-in-btn"
-              }
-              onClick={handleClockAction}
-              disabled={saving}
-            >
-              {saving
-                ? "Saving..."
-                : openTimeLog
-                  ? "Clock Out"
-                  : "Clock In"}
-            </button>
-          </>
-        )}
-
-        {!selectedEmployee && (
-          <p className="no-employee-message">
-            No employee record is linked to this account.
-          </p>
-        )}
-      </section>
-
-      <section className="activity-card">
-        <h3>
-          Today's Activity
-        </h3>
-
-        <div className="activity-table-wrapper">
-          <table>
+        <div className="table-wrapper">
+          <table className="data-table">
             <thead>
               <tr>
+                <th>
+                  Date
+                </th>
+
                 <th>
                   Clock In
                 </th>
@@ -470,40 +255,43 @@ function ClockInOut() {
                 </th>
 
                 <th>
-                  Date
+                  Employee
                 </th>
               </tr>
             </thead>
 
             <tbody>
-              {timeLogs.map((timeLog) => (
+              {timeLogs.map((log) => (
                 <tr
-                  key={timeLog.timelog_id}
+                  key={log.timelog_id}
                 >
                   <td>
-                    <span className="activity-in">
-                      {formatTime(
-                        timeLog.clock_in
-                      )}
-                    </span>
+                    {log.date}
                   </td>
 
                   <td>
-                    {timeLog.clock_out ? (
-                      <span className="activity-out">
-                        {formatTime(
-                          timeLog.clock_out
-                        )}
-                      </span>
-                    ) : (
-                      <span className="activity-open">
-                        Still clocked in
-                      </span>
-                    )}
+                    {log.clock_in
+                      ? new Date(
+                          log.clock_in
+                        ).toLocaleTimeString(
+                          "en-AU"
+                        )
+                      : "-"}
                   </td>
 
                   <td>
-                    {timeLog.date}
+                    {log.clock_out
+                      ? new Date(
+                          log.clock_out
+                        ).toLocaleTimeString(
+                          "en-AU"
+                        )
+                      : "Open"}
+                  </td>
+
+                  <td>
+                    {log.employee_name ||
+                      `${currentUser?.first_name || ""} ${currentUser?.last_name || ""}`}
                   </td>
                 </tr>
               ))}
@@ -511,26 +299,20 @@ function ClockInOut() {
               {timeLogs.length === 0 && (
                 <tr>
                   <td
-                    colSpan="3"
-                    className="no-activity"
+                    colSpan="4"
+                    className="empty-row"
                   >
-                    No time records for today.
+                    No time logs found.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-
-        <div className="activity-footer">
-          {timeLogs.length} record
-          {timeLogs.length === 1
-            ? ""
-            : "s"} recorded today
-        </div>
-      </section>
+      </div>
     </section>
   );
 }
+
 
 export default ClockInOut;
