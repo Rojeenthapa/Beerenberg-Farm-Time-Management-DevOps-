@@ -1,5 +1,6 @@
 from datetime import date
 from datetime import datetime
+from datetime import time
 
 from flask import Blueprint
 from flask import jsonify
@@ -7,6 +8,7 @@ from flask import request
 
 from .extensions import db
 from .models import Employee
+from .models import Shift
 from .models import TimeLog
 from .models import User
 
@@ -41,6 +43,24 @@ def parse_date(
     except ValueError:
         raise ValueError(
             f"{field_name} must use YYYY-MM-DD format"
+        )
+
+
+def parse_time(
+    value,
+    field_name
+):
+    if not value:
+        raise ValueError(
+            f"{field_name} is required"
+        )
+
+    try:
+        return time.fromisoformat(value)
+
+    except ValueError:
+        raise ValueError(
+            f"{field_name} must use HH:MM or HH:MM:SS format"
         )
 
 
@@ -283,6 +303,185 @@ def get_current_user():
     ), 200
 
 
+@main_bp.get(
+    "/api/dashboard/employee-count"
+)
+def get_dashboard_employee_count():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    admin_employee_ids = db.session.query(
+        User.employee_id
+    ).filter(
+        User.role.in_([
+            "Admin",
+            "Administrator"
+        ])
+    )
+
+    employee_count = Employee.query.filter(
+        Employee.status == "Active",
+        ~Employee.employee_id.in_(
+            admin_employee_ids
+        )
+    ).count()
+
+    return jsonify({
+        "employee_count": employee_count
+    }), 200
+
+
+@main_bp.post("/api/users")
+def create_user():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    required_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "password",
+        "role"
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if not data.get(field)
+    ]
+
+    if missing_fields:
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    password = data["password"]
+
+    if len(password) < 8:
+        return error_response(
+            "Password must contain at least 8 characters"
+        )
+
+    email = data["email"].strip().lower()
+    role = data["role"].strip()
+
+    allowed_roles = {
+        "Admin",
+        "Staff",
+        "User"
+    }
+
+    if role not in allowed_roles:
+        return error_response(
+            "Role must be Admin, Staff, or User"
+        )
+
+    existing_employee = Employee.query.filter_by(
+        email=email
+    ).first()
+
+    if existing_employee is not None:
+        existing_user = User.query.filter_by(
+            employee_id=existing_employee.employee_id
+        ).first()
+
+        if existing_user is not None:
+            return error_response(
+                "An account already exists for this email",
+                409
+            )
+
+        return error_response(
+            "An employee already exists with this email",
+            409
+        )
+
+    try:
+        employee = Employee(
+            first_name=data["first_name"].strip(),
+            last_name=data["last_name"].strip(),
+            email=email,
+            phone=data.get("phone"),
+            role=data.get(
+                "employee_role",
+                "Farm Staff"
+            ),
+            contract_type=data.get(
+                "contract_type",
+                "Full Time"
+            ),
+            standard_hours=data.get(
+                "standard_hours",
+                38
+            ),
+            pay_rate=data.get(
+                "pay_rate",
+                0
+            ),
+            overtime_pay_rate=data.get(
+                "overtime_pay_rate",
+                0
+            ),
+            status="Active",
+            hire_date=parse_date(
+                data.get(
+                    "hire_date",
+                    date.today().isoformat()
+                ),
+                "hire_date"
+            )
+        )
+
+        db.session.add(employee)
+        db.session.flush()
+
+        user = User(
+            employee_id=employee.employee_id,
+            role=role
+        )
+
+        user.set_password(
+            password
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return jsonify({
+            "message": "User created successfully",
+            "user": user.to_dict(),
+            "created_by": admin.user_id
+        }), 201
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error)
+        )
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
 @main_bp.get("/api/users")
 def get_users():
     admin, response = (
@@ -303,6 +502,91 @@ def get_users():
         user.to_dict()
         for user in users
     ]), 200
+
+
+@main_bp.post("/api/password/change")
+def change_password():
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    current_password = data.get(
+        "current_password",
+        ""
+    )
+
+    new_password = data.get(
+        "new_password",
+        ""
+    )
+
+    confirm_password = data.get(
+        "confirm_password",
+        ""
+    )
+
+    if not current_password:
+        return error_response(
+            "Current password is required"
+        )
+
+    if not new_password:
+        return error_response(
+            "New password is required"
+        )
+
+    if len(new_password) < 8:
+        return error_response(
+            "New password must contain at least 8 characters"
+        )
+
+    if new_password != confirm_password:
+        return error_response(
+            "New passwords do not match"
+        )
+
+    if not user.check_password(
+        current_password
+    ):
+        return error_response(
+            "Current password is incorrect",
+            401
+        )
+
+    if user.check_password(
+        new_password
+    ):
+        return error_response(
+            "New password must be different"
+        )
+
+    try:
+        user.set_password(
+            new_password
+        )
+
+        db.session.commit()
+
+        return jsonify({
+            "message": (
+                "Password changed successfully"
+            )
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
 
 
 @main_bp.get("/api/employees")
@@ -369,6 +653,571 @@ def get_employee(employee_id):
     return jsonify(
         employee.to_dict()
     ), 200
+
+
+@main_bp.post("/api/employees")
+def create_employee():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    required_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "role",
+        "contract_type",
+        "standard_hours",
+        "pay_rate",
+        "overtime_pay_rate",
+        "hire_date"
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if data.get(field) in (
+            None,
+            ""
+        )
+    ]
+
+    if missing_fields:
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    email = data["email"].strip().lower()
+
+    if Employee.query.filter_by(
+        email=email
+    ).first() is not None:
+        return error_response(
+            "An employee with this email already exists",
+            409
+        )
+
+    try:
+        employee = Employee(
+            first_name=data["first_name"].strip(),
+            last_name=data["last_name"].strip(),
+            email=email,
+            phone=data.get("phone"),
+            role=data["role"].strip(),
+            contract_type=data["contract_type"],
+            standard_hours=data["standard_hours"],
+            pay_rate=data["pay_rate"],
+            overtime_pay_rate=data[
+                "overtime_pay_rate"
+            ],
+            status=data.get(
+                "status",
+                "Active"
+            ),
+            hire_date=parse_date(
+                data["hire_date"],
+                "hire_date"
+            )
+        )
+
+        db.session.add(employee)
+        db.session.commit()
+
+        return jsonify(
+            employee.to_dict()
+        ), 201
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error)
+        )
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.put(
+    "/api/employees/<int:employee_id>"
+)
+def update_employee(employee_id):
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    employee = db.session.get(
+        Employee,
+        employee_id
+    )
+
+    if employee is None:
+        return error_response(
+            "Employee not found",
+            404
+        )
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    editable_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "role",
+        "contract_type",
+        "standard_hours",
+        "pay_rate",
+        "overtime_pay_rate",
+        "status"
+    ]
+
+    for field in editable_fields:
+        if field in data:
+            value = data[field]
+
+            if isinstance(value, str):
+                value = value.strip()
+
+            setattr(
+                employee,
+                field,
+                value
+            )
+
+    if "hire_date" in data:
+        try:
+            employee.hire_date = parse_date(
+                data["hire_date"],
+                "hire_date"
+            )
+
+        except ValueError as error:
+            return error_response(
+                str(error)
+            )
+
+    try:
+        db.session.commit()
+
+        return jsonify(
+            employee.to_dict()
+        ), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.delete(
+    "/api/employees/<int:employee_id>"
+)
+def delete_employee(employee_id):
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    employee = db.session.get(
+        Employee,
+        employee_id
+    )
+
+    if employee is None:
+        return error_response(
+            "Employee not found",
+            404
+        )
+
+    try:
+        db.session.delete(employee)
+        db.session.commit()
+
+        return jsonify({
+            "message": (
+                "Employee deleted successfully"
+            )
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.get("/api/shifts")
+def get_shifts():
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    requested_employee_id = request.args.get(
+        "employee_id",
+        type=int
+    )
+
+    start_date_value = request.args.get(
+        "start_date"
+    )
+
+    end_date_value = request.args.get(
+        "end_date"
+    )
+
+    status = request.args.get(
+        "status",
+        ""
+    ).strip()
+
+    query = Shift.query
+
+    if user.is_admin:
+        if requested_employee_id is not None:
+            query = query.filter(
+                Shift.employee_id ==
+                requested_employee_id
+            )
+    else:
+        query = query.filter(
+            Shift.employee_id ==
+            user.employee_id
+        )
+
+    if start_date_value:
+        try:
+            query = query.filter(
+                Shift.date >= parse_date(
+                    start_date_value,
+                    "start_date"
+                )
+            )
+
+        except ValueError as error:
+            return error_response(
+                str(error)
+            )
+
+    if end_date_value:
+        try:
+            query = query.filter(
+                Shift.date <= parse_date(
+                    end_date_value,
+                    "end_date"
+                )
+            )
+
+        except ValueError as error:
+            return error_response(
+                str(error)
+            )
+
+    if status:
+        query = query.filter(
+            Shift.status == status
+        )
+
+    shifts = query.order_by(
+        Shift.date,
+        Shift.start_time
+    ).all()
+
+    return jsonify([
+        shift.to_dict()
+        for shift in shifts
+    ]), 200
+
+
+@main_bp.get(
+    "/api/shifts/<int:shift_id>"
+)
+def get_shift(shift_id):
+    user, response = (
+        require_authenticated_user()
+    )
+
+    if response is not None:
+        return response
+
+    shift = db.session.get(
+        Shift,
+        shift_id
+    )
+
+    if shift is None:
+        return error_response(
+            "Shift not found",
+            404
+        )
+
+    if not user.is_admin:
+        if shift.employee_id != user.employee_id:
+            return error_response(
+                "You can only view your own shifts",
+                403
+            )
+
+    return jsonify(
+        shift.to_dict()
+    ), 200
+
+
+@main_bp.post("/api/shifts")
+def create_shift():
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    required_fields = [
+        "employee_id",
+        "date",
+        "start_time",
+        "end_time"
+    ]
+
+    missing_fields = [
+        field
+        for field in required_fields
+        if data.get(field) in (
+            None,
+            ""
+        )
+    ]
+
+    if missing_fields:
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
+
+    employee = db.session.get(
+        Employee,
+        data["employee_id"]
+    )
+
+    if employee is None:
+        return error_response(
+            "Employee not found",
+            404
+        )
+
+    try:
+        shift_date = parse_date(
+            data["date"],
+            "date"
+        )
+
+        start_time = parse_time(
+            data["start_time"],
+            "start_time"
+        )
+
+        end_time = parse_time(
+            data["end_time"],
+            "end_time"
+        )
+
+        if end_time <= start_time:
+            return error_response(
+                "end_time must be later than start_time"
+            )
+
+        shift = Shift(
+            employee_id=employee.employee_id,
+            date=shift_date,
+            start_time=start_time,
+            end_time=end_time,
+            status=data.get(
+                "status",
+                "Scheduled"
+            )
+        )
+
+        db.session.add(shift)
+        db.session.commit()
+
+        return jsonify(
+            shift.to_dict()
+        ), 201
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error)
+        )
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.put(
+    "/api/shifts/<int:shift_id>"
+)
+def update_shift(shift_id):
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    shift = db.session.get(
+        Shift,
+        shift_id
+    )
+
+    if shift is None:
+        return error_response(
+            "Shift not found",
+            404
+        )
+
+    data = request.get_json(
+        silent=True
+    ) or {}
+
+    try:
+        if "employee_id" in data:
+            employee = db.session.get(
+                Employee,
+                data["employee_id"]
+            )
+
+            if employee is None:
+                return error_response(
+                    "Employee not found",
+                    404
+                )
+
+            shift.employee_id = employee.employee_id
+
+        if "date" in data:
+            shift.date = parse_date(
+                data["date"],
+                "date"
+            )
+
+        if "start_time" in data:
+            shift.start_time = parse_time(
+                data["start_time"],
+                "start_time"
+            )
+
+        if "end_time" in data:
+            shift.end_time = parse_time(
+                data["end_time"],
+                "end_time"
+            )
+
+        if "status" in data:
+            shift.status = data["status"]
+
+        if shift.end_time <= shift.start_time:
+            return error_response(
+                "end_time must be later than start_time"
+            )
+
+        db.session.commit()
+
+        return jsonify(
+            shift.to_dict()
+        ), 200
+
+    except ValueError as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error)
+        )
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
+
+
+@main_bp.delete(
+    "/api/shifts/<int:shift_id>"
+)
+def delete_shift(shift_id):
+    admin, response = (
+        require_admin_user()
+    )
+
+    if response is not None:
+        return response
+
+    shift = db.session.get(
+        Shift,
+        shift_id
+    )
+
+    if shift is None:
+        return error_response(
+            "Shift not found",
+            404
+        )
+
+    try:
+        db.session.delete(shift)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Shift deleted successfully"
+        }), 200
+
+    except Exception as error:
+        db.session.rollback()
+
+        return error_response(
+            str(error),
+            500
+        )
 
 
 @main_bp.get("/api/timelogs")

@@ -1064,3 +1064,72 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
+
+.page-error {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 30px;
+
+  background: #f5f7f6;
+}
+
+.page-error-card {
+  width: 100%;
+  max-width: 500px;
+
+  padding: 30px;
+
+  background: #ffffff;
+
+  border: 1px solid #efb6b6;
+  border-radius: 10px;
+
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+
+  text-align: center;
+}
+
+.page-error-card h1 {
+  margin: 0 0 12px;
+
+  color: #b42318;
+
+  font-size: 22px;
+}
+
+.page-error-card p {
+  margin: 0 0 22px;
+
+  color: #596273;
+
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.page-error-card button {
+  min-height: 40px;
+
+  padding: 0 18px;
+
+  border: none;
+  border-radius: 6px;
+
+  background: #287347;
+  color: #ffffff;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.page-error-card button:hover {
+  background: #1f603a;
+}

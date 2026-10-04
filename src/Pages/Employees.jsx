@@ -19,6 +19,7 @@ import {
 
 import "../styles/Employees.css";
 
+
 const EMPTY_EMPLOYEE = {
   first_name: "",
   last_name: "",
@@ -32,6 +33,7 @@ const EMPTY_EMPLOYEE = {
   status: "Active",
   hire_date: ""
 };
+
 
 function Employees() {
   const currentUser = getStoredUser();
@@ -67,8 +69,10 @@ function Employees() {
   const [error, setError] =
     useState("");
 
+
   const loadEmployees = async () => {
     if (!isAdmin) {
+      setLoading(false);
       return;
     }
 
@@ -76,11 +80,17 @@ function Employees() {
     setError("");
 
     try {
-      const data = await apiRequest(
+      const response = await apiRequest(
         "/employees"
       );
 
-      setEmployees(data);
+      const employeeList = Array.isArray(
+        response
+      )
+        ? response
+        : response.employees || [];
+
+      setEmployees(employeeList);
 
     } catch (requestError) {
       setError(
@@ -91,9 +101,11 @@ function Employees() {
     }
   };
 
+
   useEffect(() => {
     loadEmployees();
   }, []);
+
 
   const filteredEmployees = useMemo(() => {
     const searchText = search
@@ -128,6 +140,7 @@ function Employees() {
     search
   ]);
 
+
   const handleInputChange = (event) => {
     const {
       name,
@@ -139,6 +152,7 @@ function Employees() {
       [name]: value
     }));
   };
+
 
   const openAddModal = () => {
     setEditingEmployeeId(null);
@@ -153,6 +167,7 @@ function Employees() {
     setError("");
     setShowModal(true);
   };
+
 
   const openEditModal = (employee) => {
     setEditingEmployeeId(
@@ -184,6 +199,7 @@ function Employees() {
     setShowModal(true);
   };
 
+
   const closeModal = () => {
     if (saving) {
       return;
@@ -194,6 +210,7 @@ function Employees() {
     setForm(EMPTY_EMPLOYEE);
     setError("");
   };
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -240,6 +257,7 @@ function Employees() {
       );
 
       closeModal();
+
       await loadEmployees();
 
     } catch (requestError) {
@@ -250,6 +268,7 @@ function Employees() {
       setSaving(false);
     }
   };
+
 
   const handleDelete = async (employeeId) => {
     const confirmed = window.confirm(
@@ -282,21 +301,24 @@ function Employees() {
     }
   };
 
+
   const contractClassName = (
     contractType
   ) => {
-    return contractType
+    return String(contractType)
       .toLowerCase()
       .replace(/\s+/g, "-");
   };
 
+
   const statusClassName = (
     status
   ) => {
-    return status
+    return String(status)
       .toLowerCase()
       .replace(/\s+/g, "-");
   };
+
 
   if (!isAdmin) {
     return (
@@ -312,6 +334,7 @@ function Employees() {
       </section>
     );
   }
+
 
   return (
     <section className="employees-page">
@@ -416,7 +439,8 @@ function Employees() {
                       }
                     >
                       <td className="employee-id">
-                        {employee.display_id}
+                        {employee.display_id ||
+                          employee.employee_id}
                       </td>
 
                       <td className="employee-name">
@@ -576,7 +600,6 @@ function Employees() {
                     id="first_name"
                     name="first_name"
                     type="text"
-                    placeholder="Enter first name"
                     value={form.first_name}
                     onChange={handleInputChange}
                     required
@@ -592,7 +615,6 @@ function Employees() {
                     id="last_name"
                     name="last_name"
                     type="text"
-                    placeholder="Enter last name"
                     value={form.last_name}
                     onChange={handleInputChange}
                     required
@@ -609,7 +631,6 @@ function Employees() {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="employee@example.com"
                   value={form.email}
                   onChange={handleInputChange}
                   required
@@ -625,7 +646,6 @@ function Employees() {
                   id="phone"
                   name="phone"
                   type="text"
-                  placeholder="Optional"
                   value={form.phone}
                   onChange={handleInputChange}
                 />
@@ -640,7 +660,6 @@ function Employees() {
                   id="role"
                   name="role"
                   type="text"
-                  placeholder="Enter employee role"
                   value={form.role}
                   onChange={handleInputChange}
                   required
@@ -706,7 +725,6 @@ function Employees() {
                     type="number"
                     min="0"
                     step="0.01"
-                    placeholder="28.00"
                     value={form.pay_rate}
                     onChange={handleInputChange}
                     required
@@ -725,10 +743,7 @@ function Employees() {
                   type="number"
                   min="0"
                   step="0.01"
-                  placeholder="42.00"
-                  value={
-                    form.overtime_pay_rate
-                  }
+                  value={form.overtime_pay_rate}
                   onChange={handleInputChange}
                   required
                 />

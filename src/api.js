@@ -1,15 +1,20 @@
 const API_URL = "/api";
 
+
 function getStoredUser() {
   const localUser =
-    localStorage.getItem("currentUser");
+    localStorage.getItem(
+      "currentUser"
+    );
 
   if (localUser) {
     return JSON.parse(localUser);
   }
 
   const sessionUser =
-    sessionStorage.getItem("currentUser");
+    sessionStorage.getItem(
+      "currentUser"
+    );
 
   if (sessionUser) {
     return JSON.parse(sessionUser);
@@ -17,6 +22,7 @@ function getStoredUser() {
 
   return null;
 }
+
 
 async function apiRequest(
   path,
@@ -45,9 +51,13 @@ async function apiRequest(
   );
 
   const contentType =
-    response.headers.get("content-type") || "";
+    response.headers.get(
+      "content-type"
+    ) || "";
 
-  if (!contentType.includes("application/json")) {
+  if (!contentType.includes(
+    "application/json"
+  )) {
     throw new Error(
       "The server returned an unexpected response."
     );
@@ -61,8 +71,17 @@ async function apiRequest(
     );
   }
 
+  if (
+    path.startsWith("/employees") &&
+    !Array.isArray(data) &&
+    Array.isArray(data.employees)
+  ) {
+    return data.employees;
+  }
+
   return data;
 }
+
 
 export {
   API_URL,

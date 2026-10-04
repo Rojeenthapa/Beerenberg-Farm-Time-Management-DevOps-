@@ -1,34 +1,20 @@
 /* =========================================
-   DASHBOARD - FARM TIME
+DASHBOARD - FARM TIME
 ========================================= */
 
 * {
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background-color: #f7f8f9;
-  color: #1f2937;
-}
-
-
-/* =========================================
-   MAIN DASHBOARD LAYOUT
-========================================= */
-
 .dashboard-layout {
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background-color: #f7f8f9;
+  background: #f7f8f9;
 }
 
-
 /* =========================================
-   SIDEBAR
+SIDEBAR
 ========================================= */
 
 .dashboard-sidebar {
@@ -39,42 +25,34 @@ body {
   top: 0;
   left: 0;
 
-  background-color: #153f32;
-
   display: flex;
   flex-direction: column;
 
   padding: 20px 10px;
 
   z-index: 100;
+
+  background: #153f32;
 }
-
-
-/* =========================================
-   LOGO
-========================================= */
 
 .dashboard-logo {
   display: flex;
   align-items: center;
-
   gap: 10px;
 
-  padding: 5px 8px 20px 8px;
+  padding: 5px 8px 20px;
 }
 
 .dashboard-logo-icon {
   width: 38px;
   height: 38px;
-
   min-width: 38px;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   border: 2px solid #36d98b;
-
   border-radius: 50%;
 
   color: #36d98b;
@@ -90,25 +68,23 @@ body {
 }
 
 .dashboard-logo p {
-  margin: 2px 0 0 0;
+  margin: 2px 0 0;
 
   color: #4bdd9a;
 
   font-size: 10px;
 }
 
-
 /* =========================================
-   SIDEBAR NAVIGATION
+NAVIGATION
 ========================================= */
 
 .dashboard-nav {
+  width: 100%;
+
   display: flex;
   flex-direction: column;
-
   gap: 4px;
-
-  width: 100%;
 }
 
 .dashboard-nav-item {
@@ -116,7 +92,6 @@ body {
 
   display: flex;
   align-items: center;
-
   gap: 13px;
 
   padding: 11px 13px;
@@ -124,7 +99,7 @@ body {
   border: none;
   border-radius: 5px;
 
-  background-color: transparent;
+  background: transparent;
 
   color: #b3e6d0;
 
@@ -141,52 +116,50 @@ body {
     color 0.2s ease;
 }
 
-.dashboard-nav-item svg {
-  flex-shrink: 0;
-}
-
 .dashboard-nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-
+  background: rgba(255, 255, 255, 0.08);
   color: #ffffff;
 }
 
 .dashboard-nav-item.active {
-  background-color: #506e64;
-
+  background: #506e64;
   color: #ffffff;
 }
 
+.dashboard-nav-item svg {
+  flex-shrink: 0;
+}
+
+.dashboard-logout {
+  margin-top: auto;
+}
 
 /* =========================================
-   MAIN CONTENT
+MAIN CONTENT
 ========================================= */
 
 .dashboard-main-content {
   width: calc(100% - 220px);
-
   min-height: 100vh;
 
   margin-left: 220px;
+  padding: 25px 25px 30px;
 
-  padding: 25px 25px 30px 25px;
-
-  background-color: #f7f8f9;
+  background: #f7f8f9;
 }
 
-
 /* =========================================
-   HEADER
+HEADER
 ========================================= */
 
 .dashboard-top-header {
   width: 100%;
 
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 
-  margin-bottom: 25px;
+  margin-bottom: 5px;
 }
 
 .dashboard-top-header h1 {
@@ -201,7 +174,6 @@ body {
 .dashboard-admin {
   display: flex;
   align-items: center;
-
   gap: 10px;
 
   color: #6b7280;
@@ -214,28 +186,49 @@ body {
   height: 34px;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   border-radius: 50%;
 
-  background-color: #e9ecef;
-
+  background: #e9ecef;
   color: #69717c;
 }
 
+.dashboard-date {
+  margin: 0 0 25px;
+
+  color: #9098aa;
+
+  font-size: 12px;
+}
 
 /* =========================================
-   TOP SUMMARY CARDS
+ERROR MESSAGE
+========================================= */
+
+.dashboard-error {
+  margin-bottom: 18px;
+  padding: 11px 14px;
+
+  border: 1px solid #efb6b6;
+  border-radius: 6px;
+
+  background: #fff1f1;
+  color: #b42318;
+
+  font-size: 13px;
+}
+
+/* =========================================
+SUMMARY CARDS
 ========================================= */
 
 .dashboard-top-cards {
   width: 100%;
 
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   gap: 14px;
 
   margin-bottom: 20px;
@@ -246,42 +239,32 @@ body {
 
   display: flex;
   align-items: flex-start;
-
   gap: 14px;
 
   padding: 18px;
 
-  background-color: #ffffff;
+  background: #ffffff;
 
   border: 1px solid #e5e7eb;
-
   border-radius: 7px;
 
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
-
-/* Card icon */
-
 .summary-circle {
   width: 39px;
   height: 39px;
-
   min-width: 39px;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   border-radius: 50%;
 
-  background-color: #effaf4;
-
+  background: #effaf4;
   color: #257b59;
 }
-
-
-/* Card information */
 
 .summary-info {
   display: flex;
@@ -313,7 +296,6 @@ body {
   border: none;
 
   background: transparent;
-
   color: #28795b;
 
   font-family: inherit;
@@ -326,33 +308,24 @@ body {
   text-decoration: underline;
 }
 
-
 /* =========================================
-   MIDDLE GRID
+MIDDLE PANELS
 ========================================= */
 
 .dashboard-middle {
   width: 100%;
 
   display: grid;
-
   grid-template-columns: 1fr 1fr;
-
   gap: 14px;
 
   margin-bottom: 20px;
 }
 
-
-/* =========================================
-   GENERAL PANEL
-========================================= */
-
 .dashboard-panel {
-  background-color: #ffffff;
+  background: #ffffff;
 
   border: 1px solid #e5e7eb;
-
   border-radius: 7px;
 
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -360,8 +333,8 @@ body {
 
 .dashboard-panel-heading {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .dashboard-panel-heading h3 {
@@ -379,8 +352,7 @@ body {
 
   border: none;
 
-  background-color: transparent;
-
+  background: transparent;
   color: #28795b;
 
   font-family: inherit;
@@ -393,21 +365,18 @@ body {
   text-decoration: underline;
 }
 
-
 /* =========================================
-   CLOCKED IN PANEL
+HOURS PANEL
 ========================================= */
 
 .clocked-panel {
   min-height: 215px;
-
   padding: 18px;
 }
 
 .clocked-content {
   display: flex;
   align-items: center;
-
   gap: 15px;
 
   margin-top: 30px;
@@ -416,17 +385,15 @@ body {
 .clocked-icon {
   width: 50px;
   height: 50px;
-
   min-width: 50px;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   border-radius: 50%;
 
-  background-color: #eaf9ef;
-
+  background: #eaf9ef;
   color: #257b59;
 }
 
@@ -453,30 +420,24 @@ body {
   font-size: 11px;
 }
 
-
 /* =========================================
-   UPCOMING SCHEDULES
+QUICK ACTIONS
 ========================================= */
 
 .schedules-panel {
   min-height: 215px;
-
   overflow: hidden;
 }
 
 .schedules-heading {
-  padding: 18px 16px 13px 16px;
+  padding: 18px 16px 13px;
 }
-
-
-/* Schedule row */
 
 .dashboard-schedule-row {
   min-height: 57px;
 
   display: flex;
   align-items: center;
-
   gap: 11px;
 
   padding: 8px 16px;
@@ -487,22 +448,20 @@ body {
 .schedule-circle {
   width: 31px;
   height: 31px;
-
   min-width: 31px;
 
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   border-radius: 50%;
 
-  background-color: #effaf4;
-
+  background: #effaf4;
   color: #27805e;
 }
 
 .dashboard-schedule-row h4 {
-  margin: 0 0 3px 0;
+  margin: 0 0 3px;
 
   color: #4b5563;
 
@@ -518,14 +477,31 @@ body {
   font-size: 10px;
 }
 
+.dashboard-row-action {
+  margin-left: auto;
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+  color: #28795b;
+
+  font-family: inherit;
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.dashboard-row-action:hover {
+  text-decoration: underline;
+}
 
 /* =========================================
-   RECENT CLOCK EVENTS
+RECENT EVENTS
 ========================================= */
 
 .recent-events {
   width: 100%;
-
   overflow: hidden;
 }
 
@@ -533,14 +509,8 @@ body {
   padding: 16px;
 }
 
-
-/* =========================================
-   TABLE
-========================================= */
-
 .dashboard-table-wrapper {
   width: 100%;
-
   overflow-x: auto;
 }
 
@@ -549,14 +519,11 @@ body {
 
   border-collapse: collapse;
 
-  background-color: #ffffff;
+  background: #ffffff;
 }
 
-
-/* Table header */
-
 .dashboard-table thead {
-  background-color: #fafafa;
+  background: #fafafa;
 }
 
 .dashboard-table th {
@@ -570,9 +537,6 @@ body {
   text-align: left;
 }
 
-
-/* Table body */
-
 .dashboard-table td {
   padding: 11px 16px;
 
@@ -584,13 +548,8 @@ body {
 }
 
 .dashboard-table tbody tr:hover {
-  background-color: #fafafa;
+  background: #fafafa;
 }
-
-
-/* =========================================
-   CLOCK STATUS
-========================================= */
 
 .clock-status {
   display: inline-block;
@@ -603,43 +562,37 @@ body {
   font-weight: 400;
 }
 
-
-/* Clock In */
-
 .clock-in {
-  background-color: #dff7e9;
-
+  background: #dff7e9;
   color: #16834d;
 }
 
-
-/* Clock Out */
-
 .clock-out {
-  background-color: #fde3e3;
-
+  background: #fde3e3;
   color: #dc5555;
 }
 
-
-/* Time */
-
 .clock-time {
   font-family: monospace;
-
   font-size: 10px;
 }
 
+.dashboard-empty {
+  padding: 28px !important;
+
+  color: #9298aa !important;
+
+  text-align: center;
+}
 
 /* =========================================
-   LARGE SCREEN
+LARGE SCREEN
 ========================================= */
 
 @media (min-width: 1500px) {
-
   .dashboard-main-content {
-    padding-left: 28px;
     padding-right: 28px;
+    padding-left: 28px;
   }
 
   .dashboard-summary-card {
@@ -652,20 +605,17 @@ body {
   }
 }
 
-
 /* =========================================
-   TABLET
+TABLET
 ========================================= */
 
 @media (max-width: 900px) {
-
   .dashboard-sidebar {
     width: 180px;
   }
 
   .dashboard-main-content {
     width: calc(100% - 180px);
-
     margin-left: 180px;
   }
 
@@ -678,60 +628,43 @@ body {
   }
 }
 
-
 /* =========================================
-   MOBILE
+MOBILE
 ========================================= */
 
 @media (max-width: 650px) {
-
   .dashboard-sidebar {
     width: 65px;
-
-    padding-left: 6px;
     padding-right: 6px;
-  }
-
-
-  /* Hide logo text */
-
-  .dashboard-logo > div:not(.dashboard-logo-icon) {
-    display: none;
+    padding-left: 6px;
   }
 
   .dashboard-logo {
     justify-content: center;
-
-    padding-left: 0;
     padding-right: 0;
+    padding-left: 0;
   }
 
-
-  /* Hide navigation text */
-
-  .dashboard-nav-item span {
+  .dashboard-logo > div:not(
+    .dashboard-logo-icon
+  ) {
     display: none;
   }
 
   .dashboard-nav-item {
     justify-content: center;
-
     padding: 12px 5px;
   }
 
-
-  /* Main */
+  .dashboard-nav-item span {
+    display: none;
+  }
 
   .dashboard-main-content {
     width: calc(100% - 65px);
-
     margin-left: 65px;
-
     padding: 15px 10px;
   }
-
-
-  /* Header */
 
   .dashboard-top-header {
     margin-bottom: 18px;
@@ -745,28 +678,26 @@ body {
     display: none;
   }
 
-
-  /* Cards */
-
   .dashboard-top-cards {
     grid-template-columns: 1fr;
-
     gap: 10px;
   }
-
-
-  /* Middle */
 
   .dashboard-middle {
     grid-template-columns: 1fr;
-
     gap: 10px;
   }
-
-
-  /* Table */
 
   .dashboard-table {
     min-width: 600px;
   }
+}
+
+.dashboard-top-cards.single-card {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-top-cards.single-card
+.dashboard-summary-card {
+  max-width: 100%;
 }

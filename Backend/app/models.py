@@ -463,6 +463,12 @@ class Shift(db.Model):
                 if self.employee is not None
                 else None
             ),
+            "employee_name": (
+                f"{self.employee.first_name} "
+                f"{self.employee.last_name}"
+                if self.employee is not None
+                else None
+            ),
             "date": (
                 self.date.isoformat()
                 if self.date is not None
