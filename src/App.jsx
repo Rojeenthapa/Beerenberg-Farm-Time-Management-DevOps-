@@ -1,111 +1,57 @@
-import { useEffect, useState } from "react";
-import "./App.css";
+import { useState } from "react";
 import Dashboard from "./Pages/Dashboard";
+import "./App.css";
 
+const API_URL = "http://127.0.0.1:5000/api";
 
 function App() {
-  const [admin, setAdmin] = useState(null);
-  const [isCheckingSession, setIsCheckingSession] =
-    useState(true);
-  const [showPassword, setShowPassword] =
-    useState(false);
-  const [rememberMe, setRememberMe] =
-    useState(false);
-  const [loginError, setLoginError] =
-    useState("");
-  const [isLoggingIn, setIsLoggingIn] =
-    useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem(
+      "currentUser"
+    );
 
+    return savedUser
+      ? JSON.parse(savedUser)
+      : null;
+  });
 
-  useEffect(() => {
-    checkCurrentSession();
-  }, []);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-
-  async function readResponse(response) {
-    const contentType =
-      response.headers.get("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      return response.json();
-    }
-
-    return {
-      error: `Request failed with status ${response.status}.`
-    };
-  }
-
-
-  async function checkCurrentSession() {
-    try {
-      const response = await fetch(
-        "/api/auth/me",
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      );
-
-      if (!response.ok) {
-        setAdmin(null);
-        return;
-      }
-
-      const data = await readResponse(response);
-
-      if (data.authenticated && data.admin) {
-        setAdmin(data.admin);
-      } else {
-        setAdmin(null);
-      }
-    } catch {
-      setAdmin(null);
-    } finally {
-      setIsCheckingSession(false);
-    }
-  }
-
-
-  async function handleLogin(event) {
+  const handleLogin = async (event) => {
     event.preventDefault();
 
-    if (isLoggingIn) {
+    setLoginError("");
+
+    if (!email.trim() || !password) {
+      setLoginError(
+        "Please enter your email and password."
+      );
       return;
     }
 
-    const formData = new FormData(
-      event.currentTarget
-    );
-
-    const email = String(
-      formData.get("email") || ""
-    ).trim();
-
-    const password = String(
-      formData.get("password") || ""
-    );
-
-    setLoginError("");
     setIsLoggingIn(true);
 
     try {
       const response = await fetch(
-        "/api/auth/login",
+        `${API_URL}/login`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          credentials: "include",
           body: JSON.stringify({
-            email,
-            password,
-            remember_me: rememberMe
+            email: email.trim(),
+            password
           })
         }
       );
 
-      const data = await readResponse(response);
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
@@ -113,219 +59,185 @@ function App() {
         );
       }
 
-      if (!data.admin) {
-        throw new Error(
-          "Login succeeded, but no admin account was returned."
+      setCurrentUser(data.user);
+
+      if (rememberMe) {
+        localStorage.setItem(
+          "currentUser",
+          JSON.stringify(data.user)
         );
       }
 
-      setAdmin(data.admin);
     } catch (error) {
-      setLoginError(
-        error.message ||
-        "Unable to connect to the backend."
-      );
+      setLoginError(error.message);
     } finally {
       setIsLoggingIn(false);
     }
-  }
+  };
 
+  const handleLogout = () => {
+    localStorage.removeItem(
+      "currentUser"
+    );
 
-  async function handleLogout() {
-    try {
-      await fetch(
-        "/api/auth/logout",
-        {
-          method: "POST",
-          credentials: "include"
-        }
-      );
-    } catch {
-      // Clear the frontend session even if the server request fails.
-    } finally {
-      setAdmin(null);
-      setLoginError("");
-    }
-  }
+    setCurrentUser(null);
+    setEmail("");
+    setPassword("");
+    setLoginError("");
+  };
 
-
-  function clearLoginError() {
-    if (loginError) {
-      setLoginError("");
-    }
-  }
-
-
-  if (isCheckingSession) {
+  if (currentUser) {
     return (
-      <div className="login-page">
-        <main className="login-main">
-          <section className="login-card">
-            <p>Checking login...</p>
-          </section>
-        </main>
-      </div>
+      <Dashboard
+        currentUser={currentUser}
+        onLogout={handleLogout}
+      />
     );
   }
 
+  return (
+    <div className="login-page">
+      <main className="main-content">
+        <div className="background-overlay"></div>
 
-  if (!admin) {
-    return (
-      <div className="login-page">
-        <main className="login-main">
-          <div className="background-overlay"></div>
+        <section className="login-card">
+          <div className="login-logo">
+            <span>🌱</span>
+          </div>
 
-          <section className="login-card">
-            <div className="login-logo">
-              <span>⌁</span>
+          <h2>Farm Time</h2>
+
+          <p className="system-title">
+            Management System
+          </p>
+
+          <div className="welcome">
+            <h3>Welcome back!</h3>
+
+            <p>
+              Login to your administrator account
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin}>
+            <div className="input-wrapper">
+              <span className="input-icon">
+                ✉
+              </span>
+
+              <input
+                type="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                }}
+                autoComplete="email"
+                required
+              />
             </div>
 
-            <h2>Farm Time</h2>
+            <div className="input-wrapper">
+              <span className="input-icon">
+                🔒
+              </span>
 
-            <p className="system-title">
-              Management System
-            </p>
+              <input
+                type={
+                  showPassword
+                    ? "text"
+                    : "password"
+                }
+                placeholder="Password"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                }}
+                autoComplete="current-password"
+                required
+              />
 
-            <div className="welcome">
-              <h3>Welcome back!</h3>
-              <p>Login to your account</p>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => {
+                  setShowPassword(
+                    (currentValue) => !currentValue
+                  );
+                }}
+              >
+                {showPassword
+                  ? "Hide"
+                  : "Show"}
+              </button>
             </div>
 
             {loginError && (
-              <p
-                className="login-error"
-                role="alert"
-              >
+              <p className="login-error">
                 {loginError}
               </p>
             )}
 
-            <form onSubmit={handleLogin}>
-              <div className="input-wrapper">
-                <span className="input-icon">
-                  ✉
-                </span>
-
+            <div className="form-options">
+              <label className="remember">
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email address"
-                  autoComplete="email"
-                  onChange={clearLoginError}
-                  required
-                />
-              </div>
-
-              <div className="input-wrapper">
-                <span className="input-icon">
-                  ♙
-                </span>
-
-                <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
-                  name="password"
-                  placeholder="Password"
-                  autoComplete="current-password"
-                  onChange={clearLoginError}
-                  required
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(event) => {
+                    setRememberMe(
+                      event.target.checked
+                    );
+                  }}
                 />
 
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() =>
-                    setShowPassword(
-                      (current) => !current
-                    )
-                  }
-                  aria-label={
-                    showPassword
-                      ? "Hide password"
-                      : "Show password"
-                  }
-                >
-                  {showPassword ? "◉" : "◌"}
-                </button>
-              </div>
-
-              <div className="form-options">
-                <label className="remember">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(event) =>
-                      setRememberMe(
-                        event.target.checked
-                      )
-                    }
-                  />
-
-                  <span>Remember me</span>
-                </label>
-
-                <a
-                  href="#"
-                  className="forgot-link"
-                  onClick={(event) =>
-                    event.preventDefault()
-                  }
-                >
-                  Forgot Password?
-                </a>
-              </div>
+                <span>
+                  Remember me
+                </span>
+              </label>
 
               <button
-                type="submit"
-                className="login-button"
-                disabled={isLoggingIn}
+                type="button"
+                className="forgot-link"
+                onClick={() => {
+                  setLoginError(
+                    "Contact an administrator to reset your password."
+                  );
+                }}
               >
-                {isLoggingIn
-                  ? "Logging in..."
-                  : "Login"}
+                Forgot Password?
               </button>
-            </form>
+            </div>
 
-            <p className="signup-text">
-              Don't have an account?{" "}
-              <a
-                href="#"
-                onClick={(event) =>
-                  event.preventDefault()
-                }
-              >
-                Sign up
-              </a>
-            </p>
-          </section>
+            <button
+              type="submit"
+              className="login-button"
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn
+                ? "Signing in..."
+                : "Login"}
+            </button>
+          </form>
 
-          <button
-            type="button"
-            className="help-button"
-            onClick={() =>
-              alert(
-                "Please contact the system administrator."
-              )
-            }
-          >
-            ?
-          </button>
-        </main>
-      </div>
-    );
-  }
+          <p className="signup-text">
+            Administrator access only
+          </p>
+        </section>
 
-
-  return (
-    <Dashboard
-      admin={admin}
-      onLogout={handleLogout}
-    />
+        <button
+          className="help-button"
+          type="button"
+          onClick={() => {
+            window.alert(
+              "Contact your system administrator for help."
+            );
+          }}
+        >
+          ?
+        </button>
+      </main>
+    </div>
   );
 }
-
 
 export default App;

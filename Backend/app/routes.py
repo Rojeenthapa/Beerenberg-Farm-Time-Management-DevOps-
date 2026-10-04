@@ -3,273 +3,250 @@ from datetime import date
 from flask import Blueprint
 from flask import jsonify
 from flask import request
-from flask_login import current_user
-from flask_login import login_required
-from flask_login import login_user
-from flask_login import logout_user
-from sqlalchemy.exc import IntegrityError
 
 from .extensions import db
-from .models import AdminUser
 from .models import Employee
+from .models import User
 
 
-main_bp = Blueprint(
-    "main",
-    __name__
-)
+main_bp = Blueprint("main", __name__)
+
+
+def error_response(message, status_code=400):
+    return jsonify({
+        "error": message
+    }), status_code
+
+
+def parse_date(value, field_name):
+    if not value:
+        raise ValueError(
+            f"{field_name} is required"
+        )
+
+    return date.fromisoformat(value)
 
 
 @main_bp.get("/api/health")
 def health_check():
-    return jsonify({
-        "status": "ok",
-        "message": "Farm Time Management API is running"
-    }), 200
+    try:
+        db.session.execute(db.text("SELECT 1"))
 
-
-@main_bp.post("/api/auth/login")
-def admin_login():
-    data = request.get_json(silent=True)
-
-    if not data:
         return jsonify({
-            "error": "Request body must contain JSON data."
-        }), 400
+            "status": "ok",
+            "database": "connected",
+            "message": (
+                "Farm Time Management API is running"
+            )
+        }), 200
 
-    email = str(
-        data.get("email", "")
-    ).strip().lower()
-
-    password = str(
-        data.get("password", "")
-    )
-
-    if not email or not password:
+    except Exception as error:
         return jsonify({
-            "error": "Email and password are required."
-        }), 400
-
-    admin = AdminUser.query.filter_by(
-        email=email
-    ).first()
-
-    if (
-        admin is None
-        or not admin.is_active
-        or not admin.check_password(password)
-    ):
-        return jsonify({
-            "error": "Invalid email or password."
-        }), 401
-
-    login_user(
-        admin,
-        remember=bool(
-            data.get("remember_me", False)
-        )
-    )
-
-    return jsonify({
-        "message": "Login successful.",
-        "admin": admin.to_dict()
-    }), 200
+            "status": "error",
+            "database": "disconnected",
+            "message": str(error)
+        }), 500
 
 
-@main_bp.post("/api/auth/logout")
-@login_required
-def admin_logout():
-    logout_user()
-
-    return jsonify({
-        "message": "Logout successful."
-    }), 200
-
-
-@main_bp.get("/api/auth/me")
-def current_admin():
-    if not current_user.is_authenticated:
-        return jsonify({
-            "authenticated": False
-        }), 401
-
-    return jsonify({
-        "authenticated": True,
-        "admin": current_user.to_dict()
-    }), 200
-
-
-@main_bp.post("/api/employees")
-@login_required
-def create_employee():
-    data = request.get_json(silent=True)
-
-    if not data:
-        return jsonify({
-            "error": "Request body must contain JSON data."
-        }), 400
+@main_bp.post("/api/admin/create")
+def create_admin():
+    data = request.get_json(silent=True) or {}
 
     required_fields = [
         "first_name",
         "last_name",
         "email",
-        "role",
-        "contract_type",
-        "standard_hours",
-        "pay_rate",
-        "overtime_pay_rate",
-        "hire_date"
+        "password"
     ]
 
     missing_fields = [
         field
         for field in required_fields
-        if field not in data or data[field] in (None, "")
+        if not data.get(field)
     ]
 
     if missing_fields:
-        return jsonify({
-            "error": "Validation failed.",
-            "details": {
-                field: "This field is required."
-                for field in missing_fields
-            }
-        }), 400
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
 
-    first_name = str(
-        data["first_name"]
-    ).strip()
-
-    last_name = str(
-        data["last_name"]
-    ).strip()
-
-    email = str(
-        data["email"]
-    ).strip().lower()
-
-    phone = str(
-        data.get("phone", "")
-    ).strip() or None
-
-    role = str(
-        data["role"]
-    ).strip()
-
-    contract_type = str(
-        data["contract_type"]
-    ).strip()
-
-    validation_error = validate_employee_fields(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        role=role,
-        contract_type=contract_type,
-        standard_hours=data["standard_hours"],
-        pay_rate=data["pay_rate"],
-        overtime_pay_rate=data["overtime_pay_rate"],
-        hire_date_value=data["hire_date"]
-    )
-
-    if validation_error:
-        return jsonify(validation_error), 400
+    email = data["email"].strip().lower()
 
     existing_employee = Employee.query.filter_by(
         email=email
     ).first()
 
-    if existing_employee:
-        if existing_employee.status == "Inactive":
-            existing_employee.first_name = first_name
-            existing_employee.last_name = last_name
-            existing_employee.phone = phone
-            existing_employee.role = role
-            existing_employee.contract_type = contract_type
-            existing_employee.standard_hours = float(
-                data["standard_hours"]
-            )
-            existing_employee.pay_rate = float(
-                data["pay_rate"]
-            )
-            existing_employee.overtime_pay_rate = float(
-                data["overtime_pay_rate"]
-            )
-            existing_employee.hire_date = date.fromisoformat(
-                str(data["hire_date"])
-            )
-            existing_employee.status = "Active"
-
-            try:
-                db.session.commit()
-            except IntegrityError:
-                db.session.rollback()
-
-                return jsonify({
-                    "error": (
-                        "The inactive employee could not "
-                        "be reactivated."
-                    )
-                }), 409
-
-            return jsonify({
-                "message": (
-                    "Inactive employee reactivated successfully."
-                ),
-                "employee": existing_employee.to_dict()
-            }), 200
-
-        return jsonify({
-            "error": "An employee with this email already exists."
-        }), 409
-
-    employee = Employee(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        phone=phone,
-        role=role,
-        contract_type=contract_type,
-        standard_hours=float(
-            data["standard_hours"]
-        ),
-        pay_rate=float(
-            data["pay_rate"]
-        ),
-        overtime_pay_rate=float(
-            data["overtime_pay_rate"]
-        ),
-        status="Active",
-        hire_date=date.fromisoformat(
-            str(data["hire_date"])
-        )
-    )
-
     try:
-        db.session.add(employee)
+        if existing_employee is not None:
+            existing_user = User.query.filter_by(
+                employee_id=existing_employee.employee_id
+            ).first()
+
+            if existing_user is not None:
+                return error_response(
+                    "An account already exists for this email",
+                    409
+                )
+
+            employee = existing_employee
+
+        else:
+            employee = Employee(
+                first_name=data["first_name"].strip(),
+                last_name=data["last_name"].strip(),
+                email=email,
+                phone=data.get("phone"),
+                role=data.get(
+                    "employee_role",
+                    "Administrator"
+                ),
+                contract_type=data.get(
+                    "contract_type",
+                    "Full Time"
+                ),
+                standard_hours=data.get(
+                    "standard_hours",
+                    38
+                ),
+                pay_rate=data.get(
+                    "pay_rate",
+                    0
+                ),
+                overtime_pay_rate=data.get(
+                    "overtime_pay_rate",
+                    0
+                ),
+                status="Active",
+                hire_date=parse_date(
+                    data.get(
+                        "hire_date",
+                        date.today().isoformat()
+                    ),
+                    "hire_date"
+                )
+            )
+
+            db.session.add(employee)
+            db.session.flush()
+
+        user = User(
+            employee_id=employee.employee_id,
+            role="Admin"
+        )
+        user.set_password(data["password"])
+
+        db.session.add(user)
         db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
 
         return jsonify({
-            "error": (
-                "The employee could not be created "
-                "because of a database conflict."
-            )
-        }), 409
+            "message": (
+                "Admin account created successfully"
+            ),
+            "user": user.to_dict()
+        }), 201
 
-    return jsonify(
-        employee.to_dict()
-    ), 201
+    except ValueError as error:
+        db.session.rollback()
+        return error_response(str(error))
+
+    except Exception as error:
+        db.session.rollback()
+        return error_response(str(error), 500)
+
+
+@main_bp.post("/api/login")
+def login():
+    data = request.get_json(silent=True) or {}
+
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not password:
+        return error_response(
+            "Email and password are required"
+        )
+
+    employee = Employee.query.filter_by(
+        email=email
+    ).first()
+
+    if employee is None:
+        return error_response(
+            "Invalid email or password",
+            401
+        )
+
+    user = User.query.filter_by(
+        employee_id=employee.employee_id
+    ).first()
+
+    if user is None or not user.check_password(password):
+        return error_response(
+            "Invalid email or password",
+            401
+        )
+
+    if not user.is_admin:
+        return error_response(
+            "This account does not have administrator access",
+            403
+        )
+
+    return jsonify({
+        "message": "Login successful",
+        "user": user.to_dict()
+    }), 200
+
+
+@main_bp.get("/api/users")
+def get_users():
+    users = User.query.join(Employee).order_by(
+        Employee.last_name,
+        Employee.first_name
+    ).all()
+
+    return jsonify([
+        user.to_dict()
+        for user in users
+    ]), 200
 
 
 @main_bp.get("/api/employees")
-@login_required
-def list_employees():
-    employees = Employee.query.filter_by(
-        status="Active"
-    ).order_by(
-        Employee.employee_id
+def get_employees():
+    search = request.args.get(
+        "search",
+        ""
+    ).strip()
+
+    status = request.args.get(
+        "status",
+        ""
+    ).strip()
+
+    query = Employee.query
+
+    if search:
+        search_value = f"%{search}%"
+
+        query = query.filter(
+            db.or_(
+                Employee.first_name.ilike(search_value),
+                Employee.last_name.ilike(search_value),
+                Employee.email.ilike(search_value),
+                Employee.role.ilike(search_value),
+                Employee.contract_type.ilike(search_value)
+            )
+        )
+
+    if status:
+        query = query.filter(
+            Employee.status == status
+        )
+
+    employees = query.order_by(
+        Employee.last_name,
+        Employee.first_name
     ).all()
 
     return jsonify([
@@ -278,25 +255,21 @@ def list_employees():
     ]), 200
 
 
-@main_bp.put("/api/employees/<int:employee_id>")
-@login_required
-def update_employee(employee_id):
-    employee = db.session.get(
+@main_bp.get("/api/employees/<int:employee_id>")
+def get_employee(employee_id):
+    employee = db.get_or_404(
         Employee,
         employee_id
     )
 
-    if employee is None:
-        return jsonify({
-            "error": "Employee not found."
-        }), 404
+    return jsonify(
+        employee.to_dict()
+    ), 200
 
-    data = request.get_json(silent=True)
 
-    if not data:
-        return jsonify({
-            "error": "Request body must contain JSON data."
-        }), 400
+@main_bp.post("/api/employees")
+def create_employee():
+    data = request.get_json(silent=True) or {}
 
     required_fields = [
         "first_name",
@@ -313,249 +286,127 @@ def update_employee(employee_id):
     missing_fields = [
         field
         for field in required_fields
-        if field not in data or data[field] in (None, "")
+        if data.get(field) in (None, "")
     ]
 
     if missing_fields:
-        return jsonify({
-            "error": "Validation failed.",
-            "details": {
-                field: "This field is required."
-                for field in missing_fields
-            }
-        }), 400
+        return error_response(
+            "Missing fields: "
+            + ", ".join(missing_fields)
+        )
 
-    first_name = str(
-        data["first_name"]
-    ).strip()
+    email = data["email"].strip().lower()
 
-    last_name = str(
-        data["last_name"]
-    ).strip()
-
-    email = str(
-        data["email"]
-    ).strip().lower()
-
-    phone = str(
-        data.get("phone", "")
-    ).strip() or None
-
-    role = str(
-        data["role"]
-    ).strip()
-
-    contract_type = str(
-        data["contract_type"]
-    ).strip()
-
-    validation_error = validate_employee_fields(
-        first_name=first_name,
-        last_name=last_name,
-        email=email,
-        role=role,
-        contract_type=contract_type,
-        standard_hours=data["standard_hours"],
-        pay_rate=data["pay_rate"],
-        overtime_pay_rate=data["overtime_pay_rate"],
-        hire_date_value=data["hire_date"]
-    )
-
-    if validation_error:
-        return jsonify(validation_error), 400
-
-    duplicate_email = Employee.query.filter(
-        Employee.email == email,
-        Employee.employee_id != employee_id
-    ).first()
-
-    if duplicate_email:
-        return jsonify({
-            "error": "Another employee already uses this email."
-        }), 409
-
-    employee.first_name = first_name
-    employee.last_name = last_name
-    employee.email = email
-    employee.phone = phone
-    employee.role = role
-    employee.contract_type = contract_type
-    employee.standard_hours = float(
-        data["standard_hours"]
-    )
-    employee.pay_rate = float(
-        data["pay_rate"]
-    )
-    employee.overtime_pay_rate = float(
-        data["overtime_pay_rate"]
-    )
-    employee.hire_date = date.fromisoformat(
-        str(data["hire_date"])
-    )
+    if Employee.query.filter_by(
+        email=email
+    ).first() is not None:
+        return error_response(
+            "An employee with this email already exists",
+            409
+        )
 
     try:
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-
-        return jsonify({
-            "error": (
-                "The employee could not be updated "
-                "because of a database conflict."
+        employee = Employee(
+            first_name=data["first_name"].strip(),
+            last_name=data["last_name"].strip(),
+            email=email,
+            phone=data.get("phone"),
+            role=data["role"],
+            contract_type=data["contract_type"],
+            standard_hours=data["standard_hours"],
+            pay_rate=data["pay_rate"],
+            overtime_pay_rate=data["overtime_pay_rate"],
+            status=data.get("status", "Active"),
+            hire_date=parse_date(
+                data["hire_date"],
+                "hire_date"
             )
-        }), 409
+        )
 
-    return jsonify(
-        employee.to_dict()
-    ), 200
+        db.session.add(employee)
+        db.session.commit()
+
+        return jsonify(
+            employee.to_dict()
+        ), 201
+
+    except ValueError as error:
+        db.session.rollback()
+        return error_response(str(error))
+
+    except Exception as error:
+        db.session.rollback()
+        return error_response(str(error), 500)
 
 
-@main_bp.patch(
-    "/api/employees/<int:employee_id>/deactivate"
-)
-@login_required
-def deactivate_employee(employee_id):
-    employee = db.session.get(
+@main_bp.put("/api/employees/<int:employee_id>")
+def update_employee(employee_id):
+    employee = db.get_or_404(
         Employee,
         employee_id
     )
 
-    if employee is None:
-        return jsonify({
-            "error": "Employee not found."
-        }), 404
+    data = request.get_json(silent=True) or {}
 
-    if employee.status == "Inactive":
-        return jsonify({
-            "error": "Employee is already inactive."
-        }), 409
+    fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "role",
+        "contract_type",
+        "standard_hours",
+        "pay_rate",
+        "overtime_pay_rate",
+        "status"
+    ]
 
-    employee.status = "Inactive"
+    for field in fields:
+        if field in data:
+            setattr(
+                employee,
+                field,
+                data[field]
+            )
+
+    if "hire_date" in data:
+        try:
+            employee.hire_date = parse_date(
+                data["hire_date"],
+                "hire_date"
+            )
+        except ValueError as error:
+            return error_response(str(error))
 
     try:
         db.session.commit()
-    except IntegrityError:
+
+        return jsonify(
+            employee.to_dict()
+        ), 200
+
+    except Exception as error:
         db.session.rollback()
+        return error_response(str(error), 500)
+
+
+@main_bp.delete("/api/employees/<int:employee_id>")
+def delete_employee(employee_id):
+    employee = db.get_or_404(
+        Employee,
+        employee_id
+    )
+
+    try:
+        db.session.delete(employee)
+        db.session.commit()
 
         return jsonify({
-            "error": (
-                "The employee could not be deactivated "
-                "because of a database conflict."
+            "message": (
+                "Employee deleted successfully"
             )
-        }), 409
+        }), 200
 
-    return jsonify({
-        "message": "Employee deactivated successfully.",
-        "employee": employee.to_dict()
-    }), 200
-
-
-def validate_employee_fields(
-    first_name,
-    last_name,
-    email,
-    role,
-    contract_type,
-    standard_hours,
-    pay_rate,
-    overtime_pay_rate,
-    hire_date_value
-):
-    details = {}
-
-    if len(first_name) < 2 or len(first_name) > 50:
-        details["first_name"] = (
-            "Must contain between 2 and 50 characters."
-        )
-
-    if len(last_name) < 2 or len(last_name) > 50:
-        details["last_name"] = (
-            "Must contain between 2 and 50 characters."
-        )
-
-    if "@" not in email or "." not in email.split("@")[-1]:
-        details["email"] = "Enter a valid email address."
-
-    if len(role) < 2 or len(role) > 50:
-        details["role"] = (
-            "Must contain between 2 and 50 characters."
-        )
-
-    allowed_contract_types = {
-        "Casual",
-        "Part Time",
-        "Full Time"
-    }
-
-    if contract_type not in allowed_contract_types:
-        details["contract_type"] = (
-            "Must be Casual, Part Time, or Full Time."
-        )
-
-    try:
-        standard_hours_value = float(
-            standard_hours
-        )
-
-        pay_rate_value = float(
-            pay_rate
-        )
-
-        overtime_pay_rate_value = float(
-            overtime_pay_rate
-        )
-    except (
-        TypeError,
-        ValueError
-    ):
-        details["standard_hours"] = (
-            "Must be a number."
-        )
-
-        details["pay_rate"] = (
-            "Must be a number."
-        )
-
-        details["overtime_pay_rate"] = (
-            "Must be a number."
-        )
-    else:
-        if not 0 <= standard_hours_value <= 60:
-            details["standard_hours"] = (
-                "Must be between 0 and 60."
-            )
-
-        if (
-            pay_rate_value <= 0
-            or pay_rate_value > 999.99
-        ):
-            details["pay_rate"] = (
-                "Must be greater than 0 "
-                "and no more than 999.99."
-            )
-
-        if (
-            overtime_pay_rate_value < pay_rate_value
-            or overtime_pay_rate_value > 999.99
-        ):
-            details["overtime_pay_rate"] = (
-                "Must be at least the pay rate "
-                "and no more than 999.99."
-            )
-
-    try:
-        date.fromisoformat(
-            str(hire_date_value)
-        )
-    except ValueError:
-        details["hire_date"] = (
-            "Must use YYYY-MM-DD format."
-        )
-
-    if details:
-        return {
-            "error": "Validation failed.",
-            "details": details
-        }
-
-    return None
+    except Exception as error:
+        db.session.rollback()
+        return error_response(str(error), 500)

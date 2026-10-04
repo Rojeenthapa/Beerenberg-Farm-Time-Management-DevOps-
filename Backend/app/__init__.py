@@ -1,24 +1,16 @@
 import os
 
 from flask import Flask
-from flask import jsonify
+from flask_cors import CORS
 
 from .extensions import db
-from .extensions import login_manager
 from .extensions import migrate
-from .models import AdminUser
 
 
 def create_app():
-    app = Flask(
-        __name__,
-        instance_relative_config=True
-    )
+    app = Flask(__name__, instance_relative_config=True)
 
-    os.makedirs(
-        app.instance_path,
-        exist_ok=True
-    )
+    os.makedirs(app.instance_path, exist_ok=True)
 
     app.config.from_mapping(
         SECRET_KEY=os.getenv(
@@ -27,30 +19,31 @@ def create_app():
         ),
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "DATABASE_URL",
-            "sqlite:///farm_time.db"
+            (
+                "mysql+pymysql://root:"
+                "Parthiv%40admin@127.0.0.1:3306/"
+                "beerenberg_tms"
+            )
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
 
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173"
+                ]
+            }
+        }
+    )
+
     db.init_app(app)
     migrate.init_app(app, db)
-    login_manager.init_app(app)
 
-    @login_manager.unauthorized_handler
-    def handle_unauthorized():
-        return jsonify({
-            "error": "Authentication required."
-        }), 401
-
-    login_manager.login_view = None
-
-    @login_manager.user_loader
-    def load_admin(admin_id):
-        return db.session.get(
-            AdminUser,
-            int(admin_id)
-        )
-
+    from . import models
     from .routes import main_bp
 
     app.register_blueprint(main_bp)

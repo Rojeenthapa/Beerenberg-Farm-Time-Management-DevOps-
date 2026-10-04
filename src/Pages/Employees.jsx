@@ -3,12 +3,15 @@ import {
   Pencil,
   Plus,
   Search,
+  Trash2,
   X
 } from "lucide-react";
+
 import "../styles/Employees.css";
 
+const API_URL = "http://127.0.0.1:5000/api";
 
-const emptyForm = {
+const EMPTY_EMPLOYEE = {
   first_name: "",
   last_name: "",
   email: "",
@@ -18,86 +21,107 @@ const emptyForm = {
   standard_hours: "38",
   pay_rate: "",
   overtime_pay_rate: "",
+  status: "Active",
   hire_date: ""
 };
-
 
 function Employees() {
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState("");
-  const [showEmployeeModal, setShowEmployeeModal] =
-    useState(false);
-  const [editingEmployee, setEditingEmployee] =
+  const [showModal, setShowModal] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] =
     useState(null);
-  const [form, setForm] = useState(emptyForm);
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(EMPTY_EMPLOYEE);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
 
+  const loadEmployees = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/employees`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "Unable to load employees."
+        );
+      }
+
+      setEmployees(data);
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadEmployees();
   }, []);
 
+  const filteredEmployees = useMemo(() => {
+    const searchText = search.trim().toLowerCase();
 
-  async function loadEmployees() {
-  setLoading(true);
-  setError("");
-
-  try {
-    const response = await fetch(
-      "/api/employees",
-      {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          Accept: "application/json"
-        }
-      }
-    );
-
-    const contentType =
-      response.headers.get("content-type") || "";
-
-    const responseText = await response.text();
-
-    if (!contentType.includes("application/json")) {
-      throw new Error(
-        `The backend returned HTML instead of JSON. ` +
-        `HTTP status: ${response.status}. ` +
-        `Check Flask and the Vite proxy.`
-      );
+    if (!searchText) {
+      return employees;
     }
 
-    const data = JSON.parse(responseText);
+    return employees.filter((employee) => {
+      const fullName = [
+        employee.first_name,
+        employee.last_name
+      ].join(" ");
 
-    if (!response.ok) {
-      throw new Error(
-        data.error || "Failed to load employees."
-      );
-    }
+      return [
+        employee.employee_id,
+        fullName,
+        employee.email,
+        employee.role,
+        employee.contract_type,
+        employee.status
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(searchText);
+    });
+  }, [employees, search]);
 
-    setEmployees(data);
-  } catch (loadError) {
-    setEmployees([]);
-    setError(loadError.message);
-  } finally {
-    setLoading(false);
-  }
-}
+  const handleInputChange = (event) => {
+    const {
+      name,
+      value
+    } = event.target;
 
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value
+    }));
+  };
 
-  function openAddModal() {
-    setEditingEmployee(null);
-    setForm(emptyForm);
+  const openAddModal = () => {
+    setEditingEmployeeId(null);
+
+    setForm({
+      ...EMPTY_EMPLOYEE,
+      hire_date: new Date()
+        .toISOString()
+        .slice(0, 10)
+    });
+
     setError("");
-    setMessage("");
-    setShowEmployeeModal(true);
-  }
+    setShowModal(true);
+  };
 
-
-  function openEditModal(employee) {
-    setEditingEmployee(employee);
+  const openEditModal = (employee) => {
+    setEditingEmployeeId(
+      employee.employee_id
+    );
 
     setForm({
       first_name: employee.first_name || "",
@@ -105,70 +129,62 @@ function Employees() {
       email: employee.email || "",
       phone: employee.phone || "",
       role: employee.role || "",
-      contract_type:
-        employee.contract_type || "Full Time",
-      standard_hours: String(
-        employee.standard_hours ?? ""
-      ),
-      pay_rate: String(
-        employee.pay_rate ?? ""
-      ),
-      overtime_pay_rate: String(
-        employee.overtime_pay_rate ?? ""
-      ),
+      contract_type: employee.contract_type ||
+        "Full Time",
+      standard_hours: employee.standard_hours ?? "",
+      pay_rate: employee.pay_rate ?? "",
+      overtime_pay_rate:
+        employee.overtime_pay_rate ?? "",
+      status: employee.status || "Active",
       hire_date: employee.hire_date || ""
     });
 
     setError("");
-    setMessage("");
-    setShowEmployeeModal(true);
-  }
+    setShowModal(true);
+  };
 
+  const closeModal = () => {
+    if (saving) {
+      return;
+    }
 
-  function closeModal() {
-    setShowEmployeeModal(false);
-    setEditingEmployee(null);
-    setForm(emptyForm);
-  }
-
-
-  function handleInputChange(event) {
-    const { name, value } = event.target;
-
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value
-    }));
-  }
-
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    setLoading(true);
+    setShowModal(false);
+    setEditingEmployeeId(null);
+    setForm(EMPTY_EMPLOYEE);
     setError("");
-    setMessage("");
+  };
 
-    const payload = {
-      ...form,
-      standard_hours: Number(
-        form.standard_hours
-      ),
-      pay_rate: Number(
-        form.pay_rate
-      ),
-      overtime_pay_rate: Number(
-        form.overtime_pay_rate
-      )
-    };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setError("");
 
-    const url = editingEmployee
-      ? `/api/employees/${editingEmployee.employee_id}`
-      : "/api/employees";
+    const isEditing =
+      editingEmployeeId !== null;
 
-    const method = editingEmployee
+    const url = isEditing
+      ? `${API_URL}/employees/${editingEmployeeId}`
+      : `${API_URL}/employees`;
+
+    const method = isEditing
       ? "PUT"
       : "POST";
+
+    const payload = {
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      email: form.email.trim().toLowerCase(),
+      phone: form.phone.trim() || null,
+      role: form.role.trim(),
+      contract_type: form.contract_type,
+      standard_hours: Number(form.standard_hours),
+      pay_rate: Number(form.pay_rate),
+      overtime_pay_rate: Number(
+        form.overtime_pay_rate
+      ),
+      status: form.status,
+      hire_date: form.hire_date
+    };
 
     try {
       const response = await fetch(
@@ -178,7 +194,6 @@ function Employees() {
           headers: {
             "Content-Type": "application/json"
           },
-          credentials: "include",
           body: JSON.stringify(payload)
         }
       );
@@ -191,44 +206,32 @@ function Employees() {
         );
       }
 
-      setMessage(
-        data.message ||
-        (
-          editingEmployee
-            ? "Employee updated successfully."
-            : "Employee created successfully."
-        )
-      );
-
       closeModal();
       await loadEmployees();
-    } catch (saveError) {
-      setError(saveError.message);
+
+    } catch (requestError) {
+      setError(requestError.message);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  }
+  };
 
-
-  async function handleDeactivate(employeeId) {
+  const handleDelete = async (employeeId) => {
     const confirmed = window.confirm(
-      "Deactivate this employee?"
+      "Delete this employee and all related records?"
     );
 
     if (!confirmed) {
       return;
     }
 
-    setLoading(true);
     setError("");
-    setMessage("");
 
     try {
       const response = await fetch(
-        `/api/employees/${employeeId}/deactivate`,
+        `${API_URL}/employees/${employeeId}`,
         {
-          method: "PATCH",
-          credentials: "include"
+          method: "DELETE"
         }
       );
 
@@ -236,96 +239,65 @@ function Employees() {
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-          "Unable to deactivate employee."
+          data.error || "Unable to delete employee."
         );
       }
 
-      setMessage(
-        "Employee deactivated successfully."
-      );
-
       await loadEmployees();
-    } catch (deactivateError) {
-      setError(deactivateError.message);
-    } finally {
-      setLoading(false);
+
+    } catch (requestError) {
+      setError(requestError.message);
     }
-  }
+  };
 
+  const getContractClass = (contractType) => {
+    return contractType
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+  };
 
-  const filteredEmployees = useMemo(() => {
-    const searchText = search.toLowerCase();
-
-    return employees.filter((employee) => {
-      const fullName = [
-        employee.first_name,
-        employee.last_name
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return (
-        fullName.includes(searchText) ||
-        employee.email
-          .toLowerCase()
-          .includes(searchText) ||
-        employee.role
-          .toLowerCase()
-          .includes(searchText) ||
-        employee.contract_type
-          .toLowerCase()
-          .includes(searchText)
-      );
-    });
-  }, [employees, search]);
-
+  const getStatusClass = (status) => {
+    return status.toLowerCase();
+  };
 
   return (
-    <div className="employees-page">
+    <section className="employees-page">
       <div className="employees-header">
-        <h1>Employees</h1>
+        <div>
+          <h1>Employees</h1>
+        </div>
 
         <button
           type="button"
           className="add-employee-btn"
           onClick={openAddModal}
         >
-          <Plus size={17} />
-          <span>Add Employee</span>
+          <Plus size={16} />
+          Add Employee
         </button>
       </div>
 
-      {error && (
-        <p className="error-message" role="alert">
-          {error}
-        </p>
-      )}
-
-      {message && (
-        <p
-          className="success-message"
-          role="status"
-        >
-          {message}
-        </p>
-      )}
-
-      <section className="employees-card">
+      <div className="employees-card">
         <div className="employees-search-section">
           <div className="employees-search-box">
             <Search size={16} />
 
             <input
-              type="text"
+              type="search"
               placeholder="Search employees..."
               value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
             />
           </div>
         </div>
+
+        {error && (
+          <p className="employees-error">
+            {error}
+          </p>
+        )}
 
         <div className="employees-table-wrapper">
           <table className="employees-table">
@@ -333,7 +305,6 @@ function Employees() {
               <tr>
                 <th>Employee ID</th>
                 <th>Name</th>
-                <th>Email</th>
                 <th>Role</th>
                 <th>Contract Type</th>
                 <th>Pay Rate</th>
@@ -346,7 +317,7 @@ function Employees() {
               {loading && (
                 <tr>
                   <td
-                    colSpan="8"
+                    colSpan="7"
                     className="no-employees"
                   >
                     Loading employees...
@@ -368,17 +339,17 @@ function Employees() {
                       {employee.last_name}
                     </td>
 
-                    <td>{employee.email}</td>
-
-                    <td>{employee.role}</td>
+                    <td>
+                      {employee.role}
+                    </td>
 
                     <td>
                       <span
                         className={
-                          "contract-badge " +
-                          employee.contract_type
-                            .toLowerCase()
-                            .replace(" ", "-")
+                          `contract-badge ` +
+                          getContractClass(
+                            employee.contract_type
+                          )
                         }
                       >
                         {employee.contract_type}
@@ -388,12 +359,20 @@ function Employees() {
                     <td>
                       $
                       {Number(
-                        employee.pay_rate
+                        employee.pay_rate || 0
                       ).toFixed(2)}
+                      /hr
                     </td>
 
                     <td>
-                      <span className="employee-status active">
+                      <span
+                        className={
+                          `employee-status ` +
+                          getStatusClass(
+                            employee.status
+                          )
+                        }
+                      >
                         {employee.status}
                       </span>
                     </td>
@@ -404,25 +383,26 @@ function Employees() {
                           type="button"
                           className="employee-action-btn"
                           title="Edit employee"
-                          onClick={() =>
-                            openEditModal(
-                              employee
-                            )
-                          }
+                          onClick={() => {
+                            openEditModal(employee);
+                          }}
                         >
-                          <Pencil size={14} />
+                          <Pencil size={15} />
                         </button>
 
                         <button
                           type="button"
-                          className="employee-action-btn delete"
-                          onClick={() =>
-                            handleDeactivate(
-                              employee.employee_id
-                            )
+                          className={
+                            "employee-action-btn delete"
                           }
+                          title="Delete employee"
+                          onClick={() => {
+                            handleDelete(
+                              employee.employee_id
+                            );
+                          }}
                         >
-                          Deactivate
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </td>
@@ -433,10 +413,10 @@ function Employees() {
                 filteredEmployees.length === 0 && (
                   <tr>
                     <td
-                      colSpan="8"
+                      colSpan="7"
                       className="no-employees"
                     >
-                      No active employees found.
+                      No employees found
                     </td>
                   </tr>
                 )}
@@ -445,17 +425,33 @@ function Employees() {
         </div>
 
         <div className="employees-footer">
-          Showing {filteredEmployees.length} of{" "}
-          {employees.length} active employees
+          {filteredEmployees.length} employee
+          {filteredEmployees.length === 1
+            ? ""
+            : "s"}
         </div>
-      </section>
+      </div>
 
-      {showEmployeeModal && (
-        <div className="employee-modal-overlay">
-          <div className="employee-modal">
+      {showModal && (
+        <div
+          className="employee-modal-overlay"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget
+            ) {
+              closeModal();
+            }
+          }}
+        >
+          <div
+            className="employee-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="employee-modal-title"
+          >
             <div className="employee-modal-header">
-              <h2>
-                {editingEmployee
+              <h2 id="employee-modal-title">
+                {editingEmployeeId !== null
                   ? "Edit Employee"
                   : "Add Employee"}
               </h2>
@@ -464,49 +460,55 @@ function Employees() {
                 type="button"
                 className="close-modal-btn"
                 onClick={closeModal}
+                disabled={saving}
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="employee-form-group">
-                <label htmlFor="first_name">
-                  First name
-                </label>
+            <form
+              onSubmit={handleSubmit}
+              className="employee-form"
+            >
+              <div className="employee-form-grid">
+                <div className="employee-form-group">
+                  <label htmlFor="first_name">
+                    First Name
+                  </label>
 
-                <input
-                  id="first_name"
-                  name="first_name"
-                  value={form.first_name}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+                  <input
+                    id="first_name"
+                    name="first_name"
+                    value={form.first_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
 
-              <div className="employee-form-group">
-                <label htmlFor="last_name">
-                  Last name
-                </label>
+                <div className="employee-form-group">
+                  <label htmlFor="last_name">
+                    Last Name
+                  </label>
 
-                <input
-                  id="last_name"
-                  name="last_name"
-                  value={form.last_name}
-                  onChange={handleInputChange}
-                  required
-                />
+                  <input
+                    id="last_name"
+                    name="last_name"
+                    value={form.last_name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
               </div>
 
               <div className="employee-form-group">
                 <label htmlFor="email">
-                  Email
+                  Email Address
                 </label>
 
                 <input
                   id="email"
-                  type="email"
                   name="email"
+                  type="email"
                   value={form.email}
                   onChange={handleInputChange}
                   required
@@ -523,6 +525,7 @@ function Employees() {
                   name="phone"
                   value={form.phone}
                   onChange={handleInputChange}
+                  placeholder="Optional"
                 />
               </div>
 
@@ -536,13 +539,14 @@ function Employees() {
                   name="role"
                   value={form.role}
                   onChange={handleInputChange}
+                  placeholder="e.g. Field Supervisor"
                   required
                 />
               </div>
 
               <div className="employee-form-group">
                 <label htmlFor="contract_type">
-                  Contract type
+                  Contract Type
                 </label>
 
                 <select
@@ -563,81 +567,119 @@ function Employees() {
                   <option value="Casual">
                     Casual
                   </option>
+
+                  <option value="Seasonal">
+                    Seasonal
+                  </option>
                 </select>
               </div>
 
-              <div className="employee-form-group">
-                <label htmlFor="standard_hours">
-                  Standard hours
-                </label>
+              <div className="employee-form-grid">
+                <div className="employee-form-group">
+                  <label htmlFor="standard_hours">
+                    Standard Hours
+                  </label>
 
-                <input
-                  id="standard_hours"
-                  type="number"
-                  name="standard_hours"
-                  value={form.standard_hours}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="60"
-                  step="0.5"
-                  required
-                />
-              </div>
+                  <input
+                    id="standard_hours"
+                    name="standard_hours"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.standard_hours}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
 
-              <div className="employee-form-group">
-                <label htmlFor="pay_rate">
-                  Pay rate
-                </label>
+                <div className="employee-form-group">
+                  <label htmlFor="pay_rate">
+                    Pay Rate
+                  </label>
 
-                <input
-                  id="pay_rate"
-                  type="number"
-                  name="pay_rate"
-                  value={form.pay_rate}
-                  onChange={handleInputChange}
-                  min="0.01"
-                  step="0.01"
-                  required
-                />
+                  <input
+                    id="pay_rate"
+                    name="pay_rate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.pay_rate}
+                    onChange={handleInputChange}
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="employee-form-group">
                 <label htmlFor="overtime_pay_rate">
-                  Overtime pay rate
+                  Overtime Pay Rate
                 </label>
 
                 <input
                   id="overtime_pay_rate"
-                  type="number"
                   name="overtime_pay_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
                   value={form.overtime_pay_rate}
                   onChange={handleInputChange}
-                  min="0.01"
-                  step="0.01"
+                  placeholder="0.00"
                   required
                 />
               </div>
 
-              <div className="employee-form-group">
-                <label htmlFor="hire_date">
-                  Hire date
-                </label>
+              <div className="employee-form-grid">
+                <div className="employee-form-group">
+                  <label htmlFor="status">
+                    Status
+                  </label>
 
-                <input
-                  id="hire_date"
-                  type="date"
-                  name="hire_date"
-                  value={form.hire_date}
-                  onChange={handleInputChange}
-                  required
-                />
+                  <select
+                    id="status"
+                    name="status"
+                    value={form.status}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="Active">
+                      Active
+                    </option>
+
+                    <option value="Inactive">
+                      Inactive
+                    </option>
+                  </select>
+                </div>
+
+                <div className="employee-form-group">
+                  <label htmlFor="hire_date">
+                    Hire Date
+                  </label>
+
+                  <input
+                    id="hire_date"
+                    name="hire_date"
+                    type="date"
+                    value={form.hire_date}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
               </div>
+
+              {error && (
+                <p className="employees-error">
+                  {error}
+                </p>
+              )}
 
               <div className="employee-modal-actions">
                 <button
                   type="button"
                   className="employee-cancel-btn"
                   onClick={closeModal}
+                  disabled={saving}
                 >
                   Cancel
                 </button>
@@ -645,11 +687,11 @@ function Employees() {
                 <button
                   type="submit"
                   className="employee-save-btn"
-                  disabled={loading}
+                  disabled={saving}
                 >
-                  {loading
+                  {saving
                     ? "Saving..."
-                    : editingEmployee
+                    : editingEmployeeId !== null
                       ? "Save Changes"
                       : "Add Employee"}
                 </button>
@@ -658,9 +700,8 @@ function Employees() {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }
-
 
 export default Employees;

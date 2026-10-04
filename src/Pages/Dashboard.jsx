@@ -1,18 +1,13 @@
 import { useState } from "react";
-
 import {
-  LayoutDashboard,
-  Users,
-  Clock3,
-  FileText,
   CalendarDays,
   CreditCard,
+  FileText,
+  LayoutDashboard,
+  LogOut,
   Settings as SettingsIcon,
-  Leaf,
-  UserRound,
-  Sprout,
-  CircleCheck,
-  Tractor
+  Users,
+  Clock3
 } from "lucide-react";
 
 import Employees from "./Employees";
@@ -24,413 +19,176 @@ import Settings from "./Settings";
 
 import "../styles/Dashboard.css";
 
+function Dashboard({
+  currentUser,
+  onLogout
+}) {
+  const [activePage, setActivePage] = useState(
+    "Dashboard"
+  );
 
-function Dashboard({ admin, onLogout }) {
-  const [activePage, setActivePage] =
-    useState("Dashboard");
+  const fullName = [
+    currentUser?.first_name,
+    currentUser?.last_name
+  ]
+    .filter(Boolean)
+    .join(" ");
 
+  const displayName = fullName || "Administrator";
 
-  const clockEvents = [
+  const navigationItems = [
     {
-      employee: "John Doe",
-      type: "Clock In",
-      station: "Main Gate",
-      time: "07:02 AM"
+      label: "Dashboard",
+      icon: LayoutDashboard
     },
     {
-      employee: "Mary Smith",
-      type: "Clock In",
-      station: "Packing Shed",
-      time: "07:15 AM"
+      label: "Employees",
+      icon: Users
     },
     {
-      employee: "Robert Brown",
-      type: "Clock In",
-      station: "Orchard — Block A",
-      time: "07:30 AM"
+      label: "Clock In/Out",
+      icon: Clock3
     },
     {
-      employee: "John Doe",
-      type: "Clock Out",
-      station: "Packing Shed",
-      time: "11:15 AM"
+      label: "Hours Reporting",
+      icon: FileText
     },
     {
-      employee: "Linda White",
-      type: "Clock Out",
-      station: "Administration",
-      time: "12:01 PM"
+      label: "Roster",
+      icon: CalendarDays
+    },
+    {
+      label: "Payroll",
+      icon: CreditCard
+    },
+    {
+      label: "Settings",
+      icon: SettingsIcon
     }
   ];
 
+  const renderPage = () => {
+    if (activePage === "Employees") {
+      return <Employees />;
+    }
 
-  function DashboardHome() {
+    if (activePage === "Clock In/Out") {
+      return <ClockInOut />;
+    }
+
+    if (activePage === "Hours Reporting") {
+      return <HoursReporting />;
+    }
+
+    if (activePage === "Roster") {
+      return <Roster />;
+    }
+
+    if (activePage === "Payroll") {
+      return <Payroll />;
+    }
+
+    if (activePage === "Settings") {
+      return <Settings />;
+    }
+
     return (
-      <div className="dashboard-home">
-        <header className="dashboard-top-header">
-          <h1>Dashboard</h1>
+      <section className="dashboard-content">
+        <h1>Dashboard</h1>
 
-          <div className="dashboard-admin">
-            <span>
-              Welcome, {admin?.full_name || "Admin"}
-            </span>
+        <p className="page-description">
+          Welcome back, {displayName}.
+        </p>
 
-            <div className="admin-circle">
-              <UserRound size={18} />
-            </div>
+        <div className="dashboard-section">
+          <h2>
+            Farm Time Management System
+          </h2>
 
-            <button
-              type="button"
-              className="dashboard-logout-button"
-              onClick={onLogout}
-            >
-              Logout
-            </button>
-          </div>
-        </header>
-
-        <section className="dashboard-top-cards">
-          <div className="dashboard-summary-card">
-            <div className="summary-circle">
-              <Users size={21} />
-            </div>
-
-            <div className="summary-info">
-              <p>Employees</p>
-              <h2>12</h2>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePage("Employees")
-                }
-              >
-                View employees
-              </button>
-            </div>
-          </div>
-
-          <div className="dashboard-summary-card">
-            <div className="summary-circle">
-              <CalendarDays size={21} />
-            </div>
-
-            <div className="summary-info">
-              <p>Upcoming Roster</p>
-              <h2>5</h2>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePage("Roster")
-                }
-              >
-                View roster
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-middle">
-          <div className="dashboard-panel clocked-panel">
-            <div className="dashboard-panel-heading">
-              <h3>Clocked In Now</h3>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePage("ClockInOut")
-                }
-              >
-                Clock In/Out
-              </button>
-            </div>
-
-            <div className="clocked-content">
-              <div className="clocked-icon">
-                <Clock3 size={25} />
-              </div>
-
-              <div>
-                <h2>8</h2>
-                <p>of 12 staff clocked in</p>
-                <span>4 yet to start shift</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="dashboard-panel schedules-panel">
-            <div className="dashboard-panel-heading schedules-heading">
-              <h3>Upcoming Schedules</h3>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActivePage("Roster")
-                }
-              >
-                View all
-              </button>
-            </div>
-
-            <div className="dashboard-schedule-row">
-              <div className="schedule-circle">
-                <Sprout size={17} />
-              </div>
-
-              <div>
-                <h4>Irrigation — Block B</h4>
-                <p>Today · 2:00 PM</p>
-              </div>
-            </div>
-
-            <div className="dashboard-schedule-row">
-              <div className="schedule-circle">
-                <CircleCheck size={17} />
-              </div>
-
-              <div>
-                <h4>Fertilizer Application</h4>
-                <p>Tomorrow · 9:00 AM</p>
-              </div>
-            </div>
-
-            <div className="dashboard-schedule-row">
-              <div className="schedule-circle">
-                <Tractor size={17} />
-              </div>
-
-              <div>
-                <h4>Harvest — Orchard A</h4>
-                <p>Thu 19 Sep · 7:00 AM</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="dashboard-panel recent-events">
-          <div className="dashboard-panel-heading recent-heading">
-            <h3>Recent Clock Events</h3>
-
-            <button
-              type="button"
-              onClick={() =>
-                setActivePage("ClockInOut")
-              }
-            >
-              View all
-            </button>
-          </div>
-
-          <div className="dashboard-table-wrapper">
-            <table className="dashboard-table">
-              <thead>
-                <tr>
-                  <th>Employee</th>
-                  <th>Type</th>
-                  <th>Station</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {clockEvents.map((event, index) => (
-                  <tr key={`${event.employee}-${index}`}>
-                    <td>{event.employee}</td>
-
-                    <td>
-                      <span
-                        className={
-                          event.type === "Clock In"
-                            ? "clock-status clock-in"
-                            : "clock-status clock-out"
-                        }
-                      >
-                        {event.type}
-                      </span>
-                    </td>
-
-                    <td>{event.station}</td>
-
-                    <td className="clock-time">
-                      {event.time}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+          <p>
+            Use the navigation menu to manage
+            employees, time logs, rosters, and payroll.
+          </p>
+        </div>
+      </section>
     );
-  }
-
+  };
 
   return (
-    <div className="dashboard-layout">
-      <aside className="dashboard-sidebar">
-        <div className="dashboard-logo">
-          <div className="dashboard-logo-icon">
-            <Leaf size={22} />
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-logo">
+            🌱
           </div>
 
-          <div>
-            <h2>Farm Time</h2>
+          <div className="brand-text">
+            <h1>Farm Time</h1>
             <p>Management System</p>
           </div>
         </div>
 
-        <nav className="dashboard-nav">
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "Dashboard"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("Dashboard")
-            }
-          >
-            <LayoutDashboard size={18} />
-            <span>Dashboard</span>
-          </button>
+        <nav className="navigation">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
 
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "Employees"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("Employees")
-            }
-          >
-            <Users size={18} />
-            <span>Employees</span>
-          </button>
+            return (
+              <button
+                key={item.label}
+                type="button"
+                className={
+                  activePage === item.label
+                    ? "nav-item active"
+                    : "nav-item"
+                }
+                onClick={() => {
+                  setActivePage(item.label);
+                }}
+              >
+                <span className="nav-icon">
+                  <Icon size={18} />
+                </span>
 
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "ClockInOut"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("ClockInOut")
-            }
-          >
-            <Clock3 size={18} />
-            <span>Clock In/Out</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "HoursReporting"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("HoursReporting")
-            }
-          >
-            <FileText size={18} />
-            <span>Hours Reporting</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "Roster"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("Roster")
-            }
-          >
-            <CalendarDays size={18} />
-            <span>Roster</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "Payroll"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("Payroll")
-            }
-          >
-            <CreditCard size={18} />
-            <span>Payroll</span>
-          </button>
-
-          <button
-            type="button"
-            className={`dashboard-nav-item ${
-              activePage === "Settings"
-                ? "active"
-                : ""
-            }`}
-            onClick={() =>
-              setActivePage("Settings")
-            }
-          >
-            <SettingsIcon size={18} />
-            <span>Settings</span>
-          </button>
+                <span>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
         </nav>
 
-        <div className="dashboard-sidebar-logout">
+        <div className="logout-container">
           <button
             type="button"
-            className="dashboard-nav-item"
+            className="nav-item logout"
             onClick={onLogout}
           >
-            <UserRound size={18} />
-            <span>Logout</span>
+            <span className="nav-icon">
+              <LogOut size={18} />
+            </span>
+
+            <span>
+              Logout
+            </span>
           </button>
         </div>
       </aside>
 
-      <main className="dashboard-main-content">
-        {activePage === "Dashboard" && (
-          <DashboardHome />
-        )}
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          <h2>
+            {activePage}
+          </h2>
 
-        {activePage === "Employees" && (
-          <Employees />
-        )}
+          <div className="user-info">
+            {displayName} · {currentUser?.role}
+          </div>
+        </header>
 
-        {activePage === "ClockInOut" && (
-          <ClockInOut />
-        )}
-
-        {activePage === "HoursReporting" && (
-          <HoursReporting />
-        )}
-
-        {activePage === "Roster" && (
-          <Roster />
-        )}
-
-        {activePage === "Payroll" && (
-          <Payroll />
-        )}
-
-        {activePage === "Settings" && (
-          <Settings />
-        )}
+        {renderPage()}
       </main>
     </div>
   );
 }
-
 
 export default Dashboard;
