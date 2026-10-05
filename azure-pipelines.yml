@@ -1,4 +1,4 @@
-
+#om CI setup
 trigger:
   batch: true
   branches:
