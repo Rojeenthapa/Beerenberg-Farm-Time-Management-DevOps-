@@ -1,0 +1,96 @@
+# Azure Repos Git PR checks are configured through main's Build Validation policy.
+# See docs/AZURE_DEVOPS_SETUP.md. Commit builds run on every branch.
+trigger:
+  batch: true
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: ubuntu-latest
+
+jobs:
+  - job: Frontend
+    displayName: Frontend lint and production build
+    steps:
+      - checkout: self
+      - script: |
+          set -euo pipefail
+          for required in package.json package-lock.json eslint.config.js; do
+            if [ ! -f "$required" ]; then
+              echo "Missing $required in the checked-out branch. Commit the complete frontend setup."
+              exit 1
+            fi
+          done
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Verify frontend checkout files
+      - task: NodeTool@0
+        inputs:
+          versionSpec: '24.x'
+        displayName: Use Node.js 24
+      - script: npm ci --no-audit --no-fund
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Install locked frontend dependencies
+      - script: npm run lint -- --max-warnings=0
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Check JavaScript and React
+      - script: npm run build
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Build frontend
+        env:
+          VITE_API_BASE_URL: /api
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: '$(Build.SourcesDirectory)/dist'
+          artifact: frontend-dist
+        displayName: Publish frontend build
+
+  - job: Backend
+    displayName: Backend installation and isolated tests
+    steps:
+      - checkout: self
+      - script: |
+          set -euo pipefail
+          for required in Backend/requirements.txt Backend/requirements-dev.txt Backend/app/__init__.py Backend/app/config.py Backend/tests/conftest.py Backend/tests/test_environment.py pytest.ini; do
+            if [ ! -f "$required" ]; then
+              echo "Missing $required in the checked-out branch. Commit the complete backend setup, not only the pipeline YAML."
+              exit 1
+            fi
+          done
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Verify backend checkout files
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.12'
+        displayName: Use Python 3.12
+      - script: |
+          set -euo pipefail
+          python -m pip install -r Backend/requirements-dev.txt
+          python -m pip check
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Install and validate backend dependencies
+      - script: python -m flask --app 'app:create_app("testing")' routes
+        workingDirectory: '$(Build.SourcesDirectory)/Backend'
+        displayName: Verify Flask imports and route registration
+        env:
+          APP_ENV: testing
+          FLASK_SKIP_DOTENV: '1'
+      - script: |
+          set -euo pipefail
+          echo "##vso[task.setvariable variable=backendTestsStarted]true"
+          python -m pytest --junitxml=test-results/backend.xml
+        workingDirectory: '$(Build.SourcesDirectory)'
+        displayName: Run isolated backend setup and HTTP smoke tests
+        env:
+          APP_ENV: testing
+          FLASK_SKIP_DOTENV: '1'
+      - task: PublishTestResults@2
+        condition: and(succeededOrFailed(), eq(variables['backendTestsStarted'], 'true'))
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: 'test-results/backend.xml'
+          searchFolder: '$(Build.SourcesDirectory)'
+          testRunTitle: Backend environment checks
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+        displayName: Publish backend test results
