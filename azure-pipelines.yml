@@ -6,16 +6,16 @@ trigger:
       - '*'
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: ubuntu-24.04
 
 jobs:
   - job: Frontend
     displayName: Frontend lint and production build
     steps:
       - checkout: self
-      - task: NodeTool@0
+      - task: UseNode@1
         inputs:
-          versionSpec: '24.x'
+          version: '24.x'
         displayName: Use Node.js 24
       - script: npm ci --no-audit --no-fund
         displayName: Install locked frontend dependencies
@@ -40,6 +40,7 @@ jobs:
           versionSpec: '3.12'
         displayName: Use Python 3.12
       - script: |
+          set -euo pipefail
           python -m pip install -r Backend/requirements-dev.txt
           python -m pip check
         displayName: Install and validate backend dependencies
