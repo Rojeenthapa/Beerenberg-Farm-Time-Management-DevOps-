@@ -81,7 +81,16 @@ function ClockInOut({
 
 
   useEffect(() => {
-    loadTimeLogs();
+    let cancelled = false;
+    apiRequest("/timelogs").then((response) => {
+      if (cancelled) return;
+      const logs = Array.isArray(response) ? response : [];
+      setTimeLogs(logs);
+      setActiveLog(logs.find((log) => !log.clock_out) || null);
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    });
+    return () => { cancelled = true; };
   }, []);
 
 

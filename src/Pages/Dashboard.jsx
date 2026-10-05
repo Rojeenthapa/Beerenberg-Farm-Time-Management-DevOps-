@@ -96,118 +96,42 @@ function Dashboard({
     });
 
 
-  const loadAdminDashboard = async () => {
-    if (!isAdmin) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const [
-        employeeResponse,
-        payrollResponse,
-        exceptionResponse
-      ] = await Promise.all([
-        apiRequest(
-          "/dashboard/employee-count"
-        ),
-        apiRequest(
-          "/payroll?period_start=2026-09-21&period_end=2026-10-04"
-        ),
-        apiRequest(
-          "/compliance/exceptions?status=Open"
-        )
-      ]);
-
-      setDashboardData({
-        employeeCount:
-          employeeResponse.employee_count || 0,
-        payroll: payrollResponse,
-        openExceptions:
-          Array.isArray(
-            exceptionResponse
-          )
-            ? exceptionResponse.length
-            : 0
-      });
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const loadEmployeeDashboard = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const [
-        timeLogResponse,
-        shiftResponse,
-        hoursResponse
-      ] = await Promise.all([
-        apiRequest(
-          `/timelogs?employee_id=${currentUser.employee_id}`
-        ),
-        apiRequest(
-          `/shifts?employee_id=${currentUser.employee_id}`
-        ),
-        apiRequest(
-          `/hours?from_date=2026-09-21&to_date=2026-10-04&employee_id=${currentUser.employee_id}`
-        )
-      ]);
-
-      const timeLogs = Array.isArray(
-        timeLogResponse
-      )
-        ? timeLogResponse
-        : [];
-
-      const shifts = Array.isArray(
-        shiftResponse
-      )
-        ? shiftResponse
-        : [];
-
-      setDashboardData({
-        activeTimeLog:
-          timeLogs.find(
-            (log) => !log.clock_out
-          ) || null,
-        shifts: shifts.slice(0, 5),
-        hours: hoursResponse
-      });
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
   useEffect(() => {
-    if (isAdmin) {
-      loadAdminDashboard();
-    } else {
-      loadEmployeeDashboard();
-    }
-  }, [
-    isAdmin,
-    currentUser?.employee_id
-  ]);
+    let cancelled = false;
+    const requests = isAdmin ? [
+      apiRequest("/dashboard/employee-count"),
+      apiRequest("/payroll?period_start=2026-09-21&period_end=2026-10-04"),
+      apiRequest("/compliance/exceptions?status=Open")
+    ] : [
+      apiRequest(`/timelogs?employee_id=${currentUser.employee_id}`),
+      apiRequest(`/shifts?employee_id=${currentUser.employee_id}`),
+      apiRequest(`/hours?from_date=2026-09-21&to_date=2026-10-04&employee_id=${currentUser.employee_id}`)
+    ];
+    Promise.all(requests).then(([first, second, third]) => {
+      if (cancelled) return;
+      setError("");
+      if (isAdmin) {
+        setDashboardData({
+          employeeCount: first.employee_count || 0,
+          payroll: second,
+          openExceptions: Array.isArray(third) ? third.length : 0
+        });
+      } else {
+        const timeLogs = Array.isArray(first) ? first : [];
+        const shifts = Array.isArray(second) ? second : [];
+        setDashboardData({
+          activeTimeLog: timeLogs.find((log) => !log.clock_out) || null,
+          shifts: shifts.slice(0, 5),
+          hours: third
+        });
+      }
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [isAdmin, currentUser.employee_id]);
 
 
   const goToPage = (page) => {

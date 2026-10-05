@@ -39,7 +39,7 @@ function Payroll({
     useState(null);
 
   const [loading, setLoading] =
-    useState(false);
+    useState(true);
 
   const [generating, setGenerating] =
     useState(false);
@@ -53,30 +53,6 @@ function Payroll({
   const isAdmin = Boolean(
     currentUser?.is_admin
   );
-
-
-  const loadEmployees = async () => {
-    if (!isAdmin) {
-      return;
-    }
-
-    try {
-      const response = await apiRequest(
-        "/employees?status=Active"
-      );
-
-      setEmployees(
-        Array.isArray(response)
-          ? response
-          : []
-      );
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-    }
-  };
 
 
   const loadPayroll = async () => {
@@ -143,9 +119,23 @@ function Payroll({
 
 
   useEffect(() => {
-    loadEmployees();
-    loadPayroll();
-  }, []);
+    let cancelled = false;
+    if (isAdmin) {
+      apiRequest("/employees?status=Active").then((response) => {
+        if (!cancelled) setEmployees(Array.isArray(response) ? response : []);
+      }).catch((requestError) => {
+        if (!cancelled) setError(requestError.message);
+      });
+    }
+    apiRequest("/payroll?period_start=2026-09-21&period_end=2026-10-04").then((response) => {
+      if (!cancelled) setReport(response);
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [isAdmin]);
 
 
   const handleGeneratePayroll = async () => {

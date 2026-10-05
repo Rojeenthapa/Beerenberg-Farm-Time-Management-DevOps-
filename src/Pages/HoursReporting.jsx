@@ -10,9 +10,7 @@ import {
 import "../styles/HoursReporting.css";
 
 
-function HoursReporting({
-  currentUser
-}) {
+function HoursReporting() {
   const [fromDate, setFromDate] =
     useState("2026-09-21");
 
@@ -26,7 +24,7 @@ function HoursReporting({
     useState("");
 
   const [loading, setLoading] =
-    useState(false);
+    useState(true);
 
 
   const loadReport = async () => {
@@ -64,7 +62,15 @@ function HoursReporting({
 
 
   useEffect(() => {
-    loadReport();
+    let cancelled = false;
+    apiRequest("/hours?from_date=2026-09-21&to_date=2026-10-04").then((response) => {
+      if (!cancelled) setReport(response);
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => { cancelled = true; };
   }, []);
 
 

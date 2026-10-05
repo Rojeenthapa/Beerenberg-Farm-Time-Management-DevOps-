@@ -65,34 +65,22 @@ function Roster({
   };
 
 
-  const loadEmployees = async () => {
-    if (!isAdmin) {
-      return;
-    }
-
-    try {
-      const response = await apiRequest(
-        "/employees?status=Active"
-      );
-
-      setEmployees(
-        Array.isArray(response)
-          ? response
-          : []
-      );
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-    }
-  };
-
-
   useEffect(() => {
-    loadShifts();
-    loadEmployees();
-  }, []);
+    let cancelled = false;
+    apiRequest("/shifts").then((response) => {
+      if (!cancelled) setShifts(Array.isArray(response) ? response : []);
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    });
+    if (isAdmin) {
+      apiRequest("/employees?status=Active").then((response) => {
+        if (!cancelled) setEmployees(Array.isArray(response) ? response : []);
+      }).catch((requestError) => {
+        if (!cancelled) setError(requestError.message);
+      });
+    }
+    return () => { cancelled = true; };
+  }, [isAdmin]);
 
 
   const handleChange = (event) => {

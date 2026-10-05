@@ -38,33 +38,16 @@ function Settings({
   );
 
 
-  const loadUsers = async () => {
-    if (!isAdmin) {
-      return;
-    }
-
-    try {
-      const response = await apiRequest(
-        "/users"
-      );
-
-      setUsers(
-        Array.isArray(response)
-          ? response
-          : []
-      );
-
-    } catch (requestError) {
-      setError(
-        requestError.message
-      );
-    }
-  };
-
-
   useEffect(() => {
-    loadUsers();
-  }, []);
+    if (!isAdmin) return;
+    let cancelled = false;
+    apiRequest("/users").then((response) => {
+      if (!cancelled) setUsers(Array.isArray(response) ? response : []);
+    }).catch((requestError) => {
+      if (!cancelled) setError(requestError.message);
+    });
+    return () => { cancelled = true; };
+  }, [isAdmin]);
 
 
   const handlePasswordChange = (
