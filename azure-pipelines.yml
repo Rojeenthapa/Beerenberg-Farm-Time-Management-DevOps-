@@ -1,0 +1,66 @@
+#om CI setup
+trigger:
+  batch: true
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: ubuntu-24.04
+
+jobs:
+  - job: Frontend
+    displayName: Frontend lint and production build
+    steps:
+      - checkout: self
+      - task: UseNode@1
+        inputs:
+          version: '24.x'
+        displayName: Use Node.js 24
+      - script: npm ci --no-audit --no-fund
+        displayName: Install locked frontend dependencies
+      - script: npm run lint -- --max-warnings=0
+        displayName: Check JavaScript and React
+      - script: npm run build
+        displayName: Build frontend
+        env:
+          VITE_API_BASE_URL: /api
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: '$(Build.SourcesDirectory)/dist'
+          artifact: frontend-dist
+        displayName: Publish frontend build
+
+  - job: Backend
+    displayName: Backend installation and isolated tests
+    steps:
+      - checkout: self
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '3.12'
+        displayName: Use Python 3.12
+      - script: |
+          set -euo pipefail
+          python -m pip install -r Backend/requirements-dev.txt
+          python -m pip check
+        displayName: Install and validate backend dependencies
+      - script: python -m flask --app app routes
+        workingDirectory: '$(Build.SourcesDirectory)/Backend'
+        displayName: Verify Flask imports and route registration
+        env:
+          APP_ENV: testing
+          FLASK_SKIP_DOTENV: '1'
+      - script: python -m pytest --junitxml=test-results/backend.xml
+        displayName: Run isolated backend setup and HTTP smoke tests
+        env:
+          APP_ENV: testing
+          FLASK_SKIP_DOTENV: '1'
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: 'test-results/backend.xml'
+          testRunTitle: Backend environment checks
+          failTaskOnFailedTests: true
+          failTaskOnMissingResultsFile: true
+        displayName: Publish backend test results
